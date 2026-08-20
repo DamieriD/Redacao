@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Redação com Linhas Numeradas</title>
+  <!-- Biblioteca externa para geração nativa de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #e5e5e5;
+      --paper-color: #ffffff;
+      --scratch-color: #fef9e7;
+      --text-color: #2b2b2b;
+      --line-color: #e0dcd3;
+      --margin-line: #ff8585;
+      --button-bg: #2d5a27;
+      --button-hover: #1e3d1a;
+      --toolbar-bg: #ffffff;
+      --border-color: #cccccc;
+      --line-height: 2rem;
+      --status-text: #666666;
+    }
+
+    /* Estilos do Modo Escuro */
+    body.dark-mode {
+      --bg-color: #1e1e1e;
+      --paper-color: #2d2d2d;
+      --scratch-color: #252526;
+      --text-color: #d4d4d4;
+      --line-color: #404040;
+      --margin-line: #b14d4d;
+      --button-bg: #3a7a33;
+      --button-hover: #2d5a27;
+      --toolbar-bg: #252526;
+      --border-color: #454545;
+      --status-text: #aaaaaa;
+    }
+
+    body.dark-mode .scratchpad {
+      border-left: 2px dashed #555533;
+    }
+
+    body.dark-mode .scratchpad-title {
+      color: #d4c042;
+      border-bottom-color: #555533;
+    }
+
+    body.dark-mode .scratch-textarea {
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 28px,
+        #3a3a20 28px,
+        #3a3a20 29px
+      );
+      color: #e6dfa5;
+    }
+
+    body.dark-mode .tool-btn {
+      background: #2d2d2d;
+      color: #d4d4d4;
+      border-color: #454545;
+    }
+
+    body.dark-mode .tool-btn:hover {
+      background-color: #3e3e3e;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Georgia', serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Barra de Ferramentas */
+    .toolbar-container {
+      width: 100%;
+      max-width: 1250px;
+      background: var(--toolbar-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+    }
+
+    .tool-group {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      border-right: 1px solid var(--border-color);
+      padding-right: 8px;
+    }
+
+    .tool-group:last-child {
+      border-right: none;
+      margin-left: auto;
+    }
+
+    .tool-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+      padding: 6px 12px;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    .tool-btn:hover {
+      background-color: #f0f0f0;
+    }
+
+    select.tool-btn {
+      padding: 5px 8px;
+      font-weight: normal;
+    }
+
+    .save-btn {
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+    }
+
+    .save-btn:hover {
+      background-color: var(--button-hover);
+    }
+
+    /* Workspace */
+    .workspace {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 1250px;
+      justify-content: center;
+    }
+
+    .paper, .scratchpad {
+      background-color: var(--paper-color);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      border-radius: 2px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* Folha Principal */
+    .paper {
+      flex: 1.2;
+      padding: 40px 40px 40px 40px;
+    }
+
+    /* Estilo do container de impressão (PDF) */
+    .paper.printing {
+      box-shadow: none !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      padding: 20px 25px !important;
+      width: 750px !important;
+      box-sizing: border-box !important;
+    }
+
+    .paper.printing .theme-input,
+    .paper.printing .title-input,
+    .paper.printing .essay-editor {
+      color: #000000 !important;
+    }
+
+    .paper.printing .line-number {
+      color: #666666 !important;
+    }
+
+    /* Campo Tema editável em div para quebra automática de linha */
+    .theme-input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px dashed var(--border-color);
+      font-size: 1rem;
+      font-family: inherit;
+      font-style: italic;
+      margin-bottom: 15px;
+      padding: 5px 0;
+      outline: none;
+      background: transparent;
+      color: var(--text-color);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      box-sizing: border-box;
+      display: block;
+      min-height: 1.5em;
+    }
+
+    .title-input {
+      width: 100%;
+      border: none;
+      border-bottom: 2px solid var(--text-color);
+      font-size: 1.4rem;
+      font-family: inherit;
+      font-weight: bold;
+      margin-bottom: 25px;
+      padding: 5px 0;
+      outline: none;
+      background: transparent;
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+
+    /* Container com Linhas Numeradas */
+    .editor-wrapper {
+      display: flex;
+      position: relative;
+      background: repeating-linear-gradient(
+        transparent,
+        transparent calc(var(--line-height) - 1px),
+        var(--line-color) calc(var(--line-height) - 1px),
+        var(--line-color) var(--line-height)
+      );
+    }
+
+    /* Coluna dos Números (1 a 30) */
+    .line-numbers {
+      width: 45px;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+      border-right: 2px solid var(--margin-line);
+      padding-right: 8px;
+      margin-right: 15px;
+      text-align: right;
+    }
+
+    .line-number {
+      height: var(--line-height);
+      line-height: var(--line-height);
+      font-size: 0.85rem;
+      color: #999;
+      font-family: sans-serif;
+    }
+
+    /* Editor de Texto com tamanho padrão de 16px */
+    .essay-editor {
+      flex: 1;
+      height: calc(var(--line-height) * 30);
+      max-height: calc(var(--line-height) * 30);
+      border: none;
+      outline: none;
+      font-size: 16px;
+      font-family: inherit;
+      line-height: var(--line-height);
+      color: var(--text-color);
+      box-sizing: border-box;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      overflow: hidden;
+      white-space: pre-wrap;
+    }
+
+    /* Rascunho */
+    .scratchpad {
+      flex: 0.8;
+      background-color: var(--scratch-color);
+      padding: 40px 30px;
+      border-left: 2px dashed #e0d080;
+    }
+
+    .scratchpad-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #8a7300;
+      border-bottom: 2px dashed #e0d080;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .scratch-textarea {
+      width: 100%;
+      height: 900px;
+      border: none;
+      outline: none;
+      resize: vertical;
+      font-size: 1rem;
+      font-family: inherit;
+      line-height: 1.8rem;
+      background: repeating-linear-gradient(
+        transparent,
+        transparent 28px,
+        #f3ea9e 28px,
+        #f3ea9e 29px
+      );
+      color: #4a4211;
+      box-sizing: border-box;
+    }
+
+    .theme-input:empty:before,
+    .title-input::placeholder,
+    .essay-editor:empty:before,
+    .scratch-textarea::placeholder {
+      color: #a09d96;
+    }
+
+    .theme-input:empty:before,
+    .essay-editor:empty:before {
+      content: attr(data-placeholder);
+      display: block;
+    }
+
+    /* Barra de Status */
+    .status-bar {
+      width: 100%;
+      max-width: 1250px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: var(--status-text);
+    }
+
+    @media (max-width: 900px) {
+      .workspace {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra de Ferramentas -->
+  <div class="toolbar-container">
+    <!-- Botão de Alternância do Modo Escuro / Claro -->
+    <div class="tool-group">
+      <button class="tool-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar Modo Escuro/Claro">🌙 Modo Escuro</button>
+      <!-- Botão para Ativar / Desativar Corretor -->
+      <button class="tool-btn" id="spellcheck-btn" onclick="toggleSpellcheck()" title="Ativar/Desativar Corretor ortográfico">✓ Corretor: ON</button>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn" onclick="execCmd('bold')" title="Negrito"><b>B</b></button>
+      <button class="tool-btn" onclick="execCmd('italic')" title="Itálico"><i>I</i></button>
+      <button class="tool-btn" onclick="execCmd('underline')" title="Sublinhado"><u>U</u></button>
+      <button class="tool-btn" onclick="execCmd('strikeThrough')" title="Tachado"><s>S</s></button>
+      <!-- Botão para a função de Tabulação/Parágrafo -->
+      <button class="tool-btn" onclick="inserirTabulacao()" title="Inserir Tabulação (Parágrafo)">⇥ Tab</button>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn" onclick="execCmd('justifyLeft')" title="Alinhar à Esquerda">←</button>
+      <button class="tool-btn" onclick="execCmd('justifyCenter')" title="Centralizar">↔</button>
+      <button class="tool-btn" onclick="execCmd('justifyRight')" title="Alinhar à Direita">→</button>
+      <button class="tool-btn" onclick="execCmd('justifyFull')" title="Justificar">☰</button>
+    </div>
+
+    <div class="tool-group">
+      <!-- Exibe diretamente o valor do tamanho da fonte e inicia em 16px -->
+      <select class="tool-btn" id="font-size-select" onchange="alterarTamanhoFonte(this.value)">
+        <option value="12px">12px</option>
+        <option value="14px">14px</option>
+        <option value="16px" selected>16px</option>
+        <option value="18px">18px</option>
+        <option value="20px">20px</option>
+        <option value="24px">24px</option>
+      </select>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn" onclick="execCmd('undo')" title="Desfazer">↶</button>
+      <button class="tool-btn" onclick="execCmd('redo')" title="Refazer">↷</button>
+    </div>
+
+    <!-- Opções de Exportação (Seleção do Formato) -->
+    <div class="tool-group">
+      <select id="export-format" class="tool-btn">
+        <option value="txt">Formato: .TXT</option>
+        <option value="doc">Formato: .DOC (Word)</option>
+        <option value="pdf">Formato: .PDF</option>
+      </select>
+      <button class="tool-btn save-btn" onclick="exportarDocumento()">Salvar Redação</button>
+    </div>
+  </div>
+
+  <!-- Área de Trabalho -->
+  <div class="workspace">
+    <!-- Redação com Numeração de Linhas -->
+    <div class="paper" id="paper-to-print">
+      <!-- Campo do Tema em DIV editável com verificação ortográfica ativada por padrão -->
+      <div id="tema" class="theme-input" contenteditable="true" spellcheck="true" data-placeholder="Tema da Redação..."></div>
+      <input type="text" id="titulo" class="title-input" placeholder="Título da Redação" spellcheck="true" />
+      
+      <div class="editor-wrapper">
+        <div class="line-numbers" id="line-numbers">
+          <!-- Gerado via JavaScript de 1 a 30 -->
+        </div>
+        <div id="editor" class="essay-editor" contenteditable="true" spellcheck="true" data-placeholder="Escreva sua redação aqui (máximo 30 linhas)..." oninput="atualizarContadores()"></div>
+      </div>
+    </div>
+
+    <!-- Rascunho -->
+    <div class="scratchpad">
+      <div class="scratchpad-title">📝 Bloco de Rascunho</div>
+      <textarea id="rascunho" class="scratch-textarea" spellcheck="true" placeholder="Use este espaço livre para anotações..."></textarea>
+    </div>
+  </div>
+
+  <!-- Barra de Status -->
+  <div class="status-bar">
+    <span id="char-count">Caracteres: 0</span>
+    <span id="word-count">Palavras: 0</span>
+  </div>
+
+  <script>
+    // Gerar as 30 linhas numeradas ao carregar a página
+    const lineNumbersContainer = document.getElementById('line-numbers');
+    for (let i = 1; i <= 30; i++) {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'line-number';
+      lineDiv.innerText = i;
+      lineNumbersContainer.appendChild(lineDiv);
+    }
+
+    // Alternância de Tema (Escuro / Claro)
+    function toggleTheme() {
+      const body = document.body;
+      const themeBtn = document.getElementById('theme-btn');
+      body.classList.toggle('dark-mode');
+
+      if (body.classList.contains('dark-mode')) {
+        themeBtn.innerText = '☀️ Modo Claro';
+      } else {
+        themeBtn.innerText = '🌙 Modo Escuro';
+      }
+    }
+
+    // Função para Ativar / Desativar o Corretor Ortográfico
+    let spellcheckAtivo = true;
+    function toggleSpellcheck() {
+      spellcheckAtivo = !spellcheckAtivo;
+      const btn = document.getElementById('spellcheck-btn');
+      const campos = [
+        document.getElementById('editor'),
+        document.getElementById('tema'),
+        document.getElementById('titulo'),
+        document.getElementById('rascunho')
+      ];
+
+      campos.forEach(campo => {
+        if (campo) {
+          campo.setAttribute('spellcheck', spellcheckAtivo ? 'true' : 'false');
+        }
+      });
+
+      if (spellcheckAtivo) {
+        btn.innerText = '✓ Corretor: ON';
+      } else {
+        btn.innerText = '✗ Corretor: OFF';
+      }
+    }
+
+    const editor = document.getElementById('editor');
+    const scratchpad = document.getElementById('rascunho');
+
+    // Função acionada pelo botão "⇥ Tab" da barra de ferramentas
+    function inserirTabulacao() {
+      editor.focus();
+      document.execCommand('insertHTML', false, '&#09;');
+      atualizarContadores();
+    }
+
+    // Função para alterar o tamanho da fonte em px
+    function alterarTamanhoFonte(tamanho) {
+      if (!tamanho) return;
+      const selecao = window.getSelection();
+      if (selecao.rangeCount > 0 && !selecao.isCollapsed) {
+        const span = document.createElement('span');
+        span.style.fontSize = tamanho;
+        const range = selecao.getRangeAt(0);
+        range.surroundContents(span);
+      } else {
+        editor.style.fontSize = tamanho;
+      }
+    }
+
+    // Suporte aos atalhos de Tab / Ctrl+Tab para recuo de parágrafo (Tabulação)
+    function handleTabIndent(e) {
+      if (e.key === 'Tab') {
+        e.preventDefault(); // Impede a mudança de foco padrão da tecla Tab
+        
+        if (e.target === editor) {
+          document.execCommand('insertHTML', false, '&#09;');
+        } 
+        else if (e.target === scratchpad) {
+          const start = scratchpad.selectionStart;
+          const end = scratchpad.selectionEnd;
+          scratchpad.value = scratchpad.value.substring(0, start) + "\t" + scratchpad.value.substring(end);
+          scratchpad.selectionStart = scratchpad.selectionEnd = start + 1;
+        }
+        
+        atualizarContadores();
+      }
+    }
+
+    editor.addEventListener('keydown', handleTabIndent);
+    scratchpad.addEventListener('keydown', handleTabIndent);
+
+    function execCmd(command) {
+      document.execCommand(command, false, null);
+    }
+
+    function execCmdWithArg(command, arg) {
+      document.execCommand(command, false, arg);
+    }
+
+    function atualizarContadores() {
+      const texto = editor.innerText || '';
+      
+      const caracteres = texto.replace(/\n/g, '').length;
+      const palavras = texto.trim() === '' ? 0 : texto.trim().split(/\s+/).length;
+
+      document.getElementById('char-count').innerText = `Caracteres: ${caracteres}`;
+      document.getElementById('word-count').innerText = `Palavras: ${palavras}`;
+    }
+
+    // Função Unificada de Exportação (.TXT, .DOC, .PDF)
+    function exportarDocumento() {
+      const formato = document.getElementById('export-format').value;
+      const tema = document.getElementById('tema').innerText.trim();
+      const titulo = document.getElementById('titulo').value.trim() || 'Minha_Redacao';
+      const rascunho = document.getElementById('rascunho').value;
+      const textoSimples = editor.innerText;
+      const htmlEditor = editor.innerHTML;
+
+      const nomeBase = titulo.replace(/[^a-zA-Z0-9áàâãéèêíóòôõúçÁÀÂÃÉÈÊÍÓÒÔÕÚÇ\s]/g, '').replace(/\s+/g, '_');
+
+      if (formato === 'txt') {
+        let conteudoCompleto = '';
+        if (tema !== '') {
+          conteudoCompleto += `TEMA: ${tema}\n\n`;
+        }
+        conteudoCompleto += `${titulo.toUpperCase()}\n\n${textoSimples}`;
+        if (rascunho.trim() !== '') {
+          conteudoCompleto += `\n\n----------------------------------------\n`;
+          conteudoCompleto += `NOTAS DE RASCUNHO:\n\n${rascunho}`;
+        }
+        baixarArquivo(conteudoCompleto, `${nomeBase}.txt`, 'text/plain;charset=utf-8');
+      } 
+      else if (formato === 'doc') {
+        let conteudoHTML = `
+          <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+          <head><meta charset='utf-8'><title>${titulo}</title></head>
+          <body style="font-family: Georgia, serif;">
+        `;
+        if (tema !== '') {
+          conteudoHTML += `<p><i><b>Tema:</b> ${tema}</i></p>`;
+        }
+        conteudoHTML += `
+            <h2>${titulo.toUpperCase()}</h2>
+            <div>${htmlEditor}</div>
+        `;
+        if (rascunho.trim() !== '') {
+          conteudoHTML += `<hr/><br/><h3>NOTAS DE RASCUNHO:</h3><p>${rascunho.replace(/\n/g, '<br/>')}</p>`;
+        }
+        conteudoHTML += `</body></html>`;
+
+        baixarArquivo(conteudoHTML, `${nomeBase}.doc`, 'application/msword');
+      } 
+      else if (formato === 'pdf') {
+        const elemento = document.getElementById('paper-to-print');
+        
+        // Aplica classe para renderização exata sem corte
+        elemento.classList.add('printing');
+
+        const opcoes = {
+          margin:       0,
+          filename:     `${nomeBase}.pdf`,
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opcoes).from(elemento).save().then(() => {
+          elemento.classList.remove('printing');
+        }).catch(() => {
+          elemento.classList.remove('printing');
+        });
+      }
+    }
+
+    function baixarArquivo(conteudo, nomeArquivo, tipo) {
+      const blob = new Blob([conteudo], { type: tipo });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = nomeArquivo;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+  </script>
+
+</body>
+</html>
