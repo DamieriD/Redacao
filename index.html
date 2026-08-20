@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redação</title>
+  <link rel="icon" type="image/x-icon" href="image/favicon.png">
+  <link rel="stylesheet" href="style.css">
+  <!-- Biblioteca externa para geração nativa de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Lateral (Sidebar) de Histórico -->
+  <div class="sidebar">
+    <button class="btn-sidebar-new" onclick="novaRedacao()">+ Nova Redação</button>
+    <div class="sidebar-title">Recentes</div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- Barra de Ferramentas -->
+  <div class="toolbar-container">
+    <div class="tool-group">
+      <button class="tool-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar Modo Escuro/Claro">🌙 Modo Escuro</button>
+      <button class="tool-btn" id="spellcheck-btn" onclick="toggleSpellcheck()" title="Ativar/Desativar Corretor ortográfico">✓ Corretor: ON</button>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn" onclick="execCmd('bold')" title="Negrito"><b>B</b></button>
+      <button class="tool-btn" onclick="execCmd('italic')" title="Itálico"><i>I</i></button>
+      <button class="tool-btn" onclick="execCmd('underline')" title="Sublinhado"><u>U</u></button>
+      <button class="tool-btn" onclick="execCmd('strikeThrough')" title="Tachado"><s>S</s></button>
+      <button class="tool-btn" onclick="inserirTabulacao()" title="Inserir Tabulação (Parágrafo)">⇥ Tab</button>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn" onclick="execCmd('justifyLeft')" title="Alinhar à Esquerda">←</button>
+      <button class="tool-btn" onclick="execCmd('justifyCenter')" title="Centralizar">↔</button>
+      <button class="tool-btn" onclick="execCmd('justifyRight')" title="Alinhar à Direita">→</button>
+      <button class="tool-btn" onclick="execCmd('justifyFull')" title="Justificar">☰</button>
+    </div>
+
+    <div class="tool-group">
+      <select class="tool-btn" id="font-size-select" onchange="alterarTamanhoFonte(this.value)">
+        <option value="12px">12px</option>
+        <option value="14px">14px</option>
+        <option value="16px" selected>16px</option>
+        <option value="18px">18px</option>
+        <option value="20px">20px</option>
+        <option value="24px">24px</option>
+      </select>
+    </div>
+
+    <div class="tool-group">
+      <button class="tool-btn" onclick="execCmd('undo')" title="Desfazer">↶</button>
+      <button class="tool-btn" onclick="execCmd('redo')" title="Refazer">↷</button>
+    </div>
+
+    <div class="tool-group">
+      <select id="export-format" class="tool-btn">
+        <option value="txt">Formato: .TXT</option>
+        <option value="doc">Formato: .DOC (Word)</option>
+        <option value="pdf">Formato: .PDF</option>
+      </select>
+      <button class="tool-btn save-btn" onclick="exportarDocumento()">Salvar Redação</button>
+    </div>
+  </div>
+
+  <!-- Área de Trabalho -->
+  <div class="workspace">
+    <div class="paper" id="paper-to-print">
+      <div id="tema" class="theme-input" contenteditable="true" spellcheck="true" data-placeholder="Tema da Redação..." oninput="salvarProgressoLocal()"></div>
+      <input type="text" id="titulo" class="title-input" placeholder="Título da Redação" spellcheck="true" oninput="salvarProgressoLocal()" />
+      
+      <div class="editor-wrapper">
+        <div class="line-numbers" id="line-numbers"></div>
+        <div id="editor" class="essay-editor" contenteditable="true" spellcheck="true" data-placeholder="Escreva sua redação aqui (máximo 30 linhas)..." oninput="aoDigitarNoEditor()"></div>
+      </div>
+    </div>
+
+    <div class="scratchpad">
+      <div class="scratchpad-title">📝 Bloco de Rascunho</div>
+      <textarea id="rascunho" class="scratch-textarea" spellcheck="true" placeholder="Use este espaço livre para anotações..." oninput="salvarProgressoLocal()"></textarea>
+    </div>
+  </div>
+
+  <!-- Barra de Status -->
+  <div class="status-bar">
+    <span class="auto-save-status" id="save-status">💾 Rascunho salvo</span>
+    <div>
+      <span id="char-count">Caracteres: 0</span> | 
+      <span id="word-count">Palavras: 0</span>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
