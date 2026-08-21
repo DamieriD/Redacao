@@ -479,7 +479,8 @@ Coerência e Coesão (CC) [0 a 8 pontos]: Veja se a estrutura dos parágrafos es
 Morfossintaxe (M) [0 a 2 pontos]: Analise a estrutura das frases, a concordância verbal e nominal, a regência, os tempos verbais e a colocação pronominal.
 Pontuação, Acentuação e Ortografia (PO) [0 a 2 pontos]: Aponta qualquer desvio gramatical, erro de acentuação, ortografia ou uso incorreto da pontuação (vírgulas, pontos, etc.).
 
-Por favor, aponte os erros diretamente no texto, explique como posso melhorar cada trecho e dê a nota final detalhada por competência (soma total: 0 a 20 podendo ser numero quebrado).
+Por favor, aponte os erros diretamente no texto, explique como posso melhorar cada trecho e dê a nota final detalhada por competência. 
+As notas de cada competência podem ser fracionadas (ex.: 6,5 / 1,25). A soma total varia de 0 a 20 pontos.
 
 Tema: ${temaTexto}
 Título: ${tituloTexto}
