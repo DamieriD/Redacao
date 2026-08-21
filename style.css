@@ -431,14 +431,14 @@ select.tool-btn {
 }
 
 .line-numbers {
-  width: 45px;
+  width: 25px; /* Reduz a largura para trazer a linha mais para a esquerda */
   display: flex;
   flex-direction: column;
   user-select: none;
-  border-right: 2px solid var(--margin-line);
-  padding-right: 8px;
+  border-right: 2px solid var(--margin-line); /* Mantém sua linha vermelha original */
+  padding-right: 5px; /* Espaço entre o número e a linha */
   margin-right: 15px;
-  text-align: right;
+  text-align: left; /* Alinha os números à esquerda */
 }
 
 .line-number {
