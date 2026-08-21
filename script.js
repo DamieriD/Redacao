@@ -416,9 +416,9 @@ function atualizarContadores() {
 // ==========================================
 // INTEGRAÇÃO COM GEMINI AI
 // ==========================================
-const GEMINI_API_KEY = "AQ.Ab8RN6KGqrRW6gOx-jlWXOHfpSnXxyFSDdh4jopVmxUvR60M_g"; // Cole aqui sua chave do Google AI Studio
+const GROQ_API_KEY = "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"; // Cole sua chave gsk_ aqui
 
-async function avaliarRedacaoComGemini() {
+async function avaliarRedacaoComIA() {
   const temaTexto = tema ? tema.innerText.trim() : '';
   const tituloTexto = titulo ? titulo.value.trim() : '';
   const texto = editor ? editor.innerText.trim() : '';
@@ -435,7 +435,7 @@ async function avaliarRedacaoComGemini() {
     btn.disabled = true;
   }
 
-  const prompt = `Você é um corretor de redações. Avalie o texto abaixo sob estas 4 competências:
+  const prompt = `Você é um corretor de redações profissional. Avalie o texto abaixo sob estas 4 competências:
 1. Argumentação e Informatividade (AI) - Nota de 0 a 8.
 2. Coerência e Coesão (CC) - Nota de 0 a 8.
 3. Morfossintaxe (M) - Nota de 0 a 2.
@@ -446,7 +446,7 @@ Título: ${tituloTexto}
 Texto:
 ${texto}
 
-Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
+Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou depois):
 {
   "score_ai": 0,
   "feedback_ai": "texto",
@@ -460,17 +460,16 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
 }`;
 
   try {
-    // Chamada oficial para a API do Gemini sem a chave na URL
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY // A chave (mesmo começando com AQ) é enviada neste cabeçalho
+        "Authorization": `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{ text: prompt }]
-        }]
+        model: "llama-3.3-70b-versatile", // Modelo gratuito super inteligente e rápido
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }
       })
     });
 
@@ -480,9 +479,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
       throw new Error(data.error?.message || `Erro HTTP ${response.status}`);
     }
 
-    let resultText = data.candidates[0].content.parts[0].text;
-    resultText = resultText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const res = JSON.parse(resultText);
+    const res = JSON.parse(data.choices[0].message.content);
 
     document.getElementById('score-ai').innerText = `${Number(res.score_ai).toFixed(1)} / 8.0`;
     document.getElementById('feedback-ai').innerText = res.feedback_ai;
@@ -493,7 +490,7 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
     document.getElementById('score-m').innerText = `${Number(res.score_m).toFixed(1)} / 2.0`;
     document.getElementById('feedback-m').innerText = res.feedback_m;
 
-    document.getElementById('score-po').innerText = `${Number(res.score_po).toFixed(1)} / 2.0`;
+    document.getElementById('score-po').innerText = `${Number(res.score_po).innerText = res.score_po ? Number(res.score_po).toFixed(1) : "0.0"} / 2.0`;
     document.getElementById('feedback-po').innerText = res.feedback_po;
 
     const total = Number(res.score_ai) + Number(res.score_cc) + Number(res.score_m) + Number(res.score_po);
@@ -512,7 +509,6 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
     }
   }
 }
-
 // Expor funções globais
 window.processarAutenticacao = processarAutenticacao;
 window.alternarModoAutenticacao = alternarModoAutenticacao;
