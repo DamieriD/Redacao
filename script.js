@@ -535,3 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+//tabulção TAB
+document.addEventListener('DOMContentLoaded', () => {
+  if (editor) editor.addEventListener('keydown', handleTabIndent);
+  if (rascunho) rascunho.addEventListener('keydown', handleTabIndent);
+});
