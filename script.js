@@ -461,3 +461,25 @@ function baixarArquivo(conteudo, nomeArquivo, tipo) {
   link.click();
   URL.revokeObjectURL(link.href);
 }
+
+
+// ==========================================
+// AUTENTICAÇÃO COM GOOGLE
+// ==========================================
+function loginComGoogle() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  const msg = document.getElementById('auth-message');
+
+  auth.signInWithPopup(provider)
+    .then((result) => {
+      // Sucesso no Login
+      if (msg) msg.innerText = '';
+    })
+    .catch((error) => {
+      console.error("Erro no login Google:", error);
+      if (msg) {
+        msg.className = 'login-error-msg';
+        msg.innerText = 'Falha ao autenticar com a conta do Google.';
+      }
+    });
+}
