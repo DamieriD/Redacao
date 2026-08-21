@@ -9,6 +9,9 @@
   
   <!-- Biblioteca externa para geração nativa de PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <!-- Biblioteca externa para salvar e Jpeg e Png  -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Firebase SDKs (Versão Compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -115,6 +118,8 @@
             <option value="txt">Formato: .TXT</option>
             <option value="doc">Formato: .DOC (Word)</option>
             <option value="pdf">Formato: .PDF</option>
+            <option value="png">Formato: .PNG (Imagem)</option>
+            <option value="jpg">Formato: .JPG (Imagem)</option>
           </select>
           <button class="tool-btn save-btn" onclick="exportarDocumento()">Salvar Redação</button>
         </div>
