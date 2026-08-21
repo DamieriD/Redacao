@@ -432,13 +432,13 @@ select.tool-btn {
 
 /* Container dos números */
 .line-numbers {
-  width: 25px; /* Reduz a largura para trazer a linha mais para a esquerda */
+  width: 18px; /* Reduz a largura para trazer a linha mais para a esquerda */
   display: flex;
   flex-direction: column;
   user-select: none;
   border-right: 2px solid var(--margin-line); /* Mantém sua linha vermelha original */
-  padding-right: 5px; /* Espaço entre o número e a linha */
-  margin-right: 15px;
+  padding-right: 3px; /* Espaço entre o número e a linha */
+  margin-right: 5px;
   text-align: left; /* Alinha os números à esquerda */
 }
 
