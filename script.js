@@ -387,11 +387,14 @@ function alterarTamanhoFonte(tamanho) {
 function handleTabIndent(e) {
   if (e.key === 'Tab') {
     e.preventDefault();
-    
+
     if (e.target === editor) {
+      // Insere o caractere de tabulação no editor
       document.execCommand('insertHTML', false, '&#09;');
+      if (typeof aoDigitarNoEditor === 'function') aoDigitarNoEditor();
     } 
     else if (e.target === rascunho) {
+      // Insere o caractere de tabulação na textarea de rascunho
       const start = rascunho.selectionStart;
       const end = rascunho.selectionEnd;
       rascunho.value = rascunho.value.substring(0, start) + "\t" + rascunho.value.substring(end);
