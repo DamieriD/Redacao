@@ -169,7 +169,7 @@ function salvarProgresso() {
       .doc(idRedacaoAtual)
       .set(dadosRedacao, { merge: true })
       .then(() => {
-        if (statusEl) statusEl.innerText = '✓ Salvo na nuvem';
+        if (statusEl) statusEl.innerText = '💾 Rascunho salvo';
       })
       .catch((error) => {
         console.error("Erro ao salvar:", error);
@@ -296,7 +296,7 @@ function aoDigitarNoEditor() {
 // ==========================================
 // FUNÇÕES DA BARRA DE FERRAMENTAS DO EDITOR
 // ==========================================
-function formatar(comando, valor = null) {
+function execCmd(comando, valor = null) {
   if (!editor) return;
   editor.focus();
   document.execCommand(comando, false, valor);
@@ -324,16 +324,41 @@ function alterarTamanhoFonte(tamanho) {
   salvarProgresso();
 }
 
-function salvarRedacao() {
+// Suporte para exportação em .TXT, .DOC, .PDF, .PNG e .JPG (usando as libs do index.html)
+function exportarDocumento() {
   if (!editor) return;
-  const formato = document.getElementById('export-format')?.value || '.txt';
+  const formato = document.getElementById('export-format')?.value || 'txt';
   const tituloTexto = (titulo && titulo.value.trim()) ? titulo.value.trim() : 'Minha_Redacao';
   const conteudoTexto = editor.innerText || '';
+  const paperElement = document.getElementById('paper-to-print');
+
+  if (formato === 'pdf' && typeof html2pdf !== 'undefined') {
+    const opt = {
+      margin: 10,
+      filename: `${tituloTexto}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(paperElement).save();
+    return;
+  }
+
+  if ((formato === 'png' || formato === 'jpg') && typeof html2canvas !== 'undefined') {
+    html2canvas(paperElement).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `${tituloTexto}.${formato}`;
+      link.href = canvas.toDataURL(`image/${formato === 'jpg' ? 'jpeg' : 'png'}`);
+      link.click();
+    });
+    return;
+  }
 
   let blob, extensao;
-  if (formato === '.html') {
-    blob = new Blob([`<html><body><h2>${tituloTexto}</h2><p>${editor.innerHTML}</p></body></html>`], { type: 'text/html;charset=utf-8' });
-    extensao = '.html';
+  if (formato === 'doc') {
+    const content = `<html><head><meta charset="utf-8"></head><body><h2>${tituloTexto}</h2><div>${editor.innerHTML}</div></body></html>`;
+    blob = new Blob([content], { type: 'application/msword' });
+    extensao = '.doc';
   } else {
     blob = new Blob([`${tituloTexto}\n\n${conteudoTexto}`], { type: 'text/plain;charset=utf-8' });
     extensao = '.txt';
@@ -435,7 +460,7 @@ async function avaliarRedacaoComIA() {
   const tituloTexto = titulo ? titulo.value.trim() : '';
   const texto = editor ? editor.innerText.trim() : '';
   const card = document.getElementById('ai-evaluation-card');
-  const btn = document.querySelector('.ai-btn-main');
+  const btn = document.getElementById('ai-eval-btn');
 
   if (!texto) {
     alert("Escreva sua redação antes de solicitar a avaliação.");
@@ -523,7 +548,7 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou d
   }
 }
 
-// Expor funções globais para os onclick do HTML
+// Exposição das Funções Globais chamadas no HTML
 window.processarAutenticacao = processarAutenticacao;
 window.alternarModoAutenticacao = alternarModoAutenticacao;
 window.entrarComGoogle = entrarComGoogle;
@@ -531,15 +556,19 @@ window.fazerLogout = fazerLogout;
 window.avaliarRedacaoComIA = avaliarRedacaoComIA;
 window.toggleTheme = toggleTheme;
 window.toggleSpellcheck = toggleSpellcheck;
-window.formatar = formatar;
+window.execCmd = execCmd;
+window.formatar = execCmd;
 window.inserirTabulacao = inserirTabulacao;
 window.alterarTamanhoFonte = alterarTamanhoFonte;
-window.salvarRedacao = salvarRedacao;
+window.exportarDocumento = exportarDocumento;
+window.salvarRedacao = exportarDocumento;
+window.salvarProgresso = salvarProgresso;
+window.aoDigitarNoEditor = aoDigitarNoEditor;
 window.novaRedacao = novaRedacao;
 window.carregarRedacao = carregarRedacao;
 window.deletarRedacao = deletarRedacao;
 
-// Mapear elementos e registrar atalhos após o DOM carregar
+// Inicialização de Elementos e Eventos
 document.addEventListener('DOMContentLoaded', () => {
   editor = document.getElementById('editor');
   tema = document.getElementById('tema');
@@ -557,16 +586,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (editor) {
-    editor.addEventListener('input', aoDigitarNoEditor);
     editor.addEventListener('keydown', handleTabIndent);
   }
   if (rascunho) {
     rascunho.addEventListener('keydown', handleTabIndent);
-  }
-
-  const submitBtn = document.getElementById('auth-submit-btn');
-  if (submitBtn) {
-    submitBtn.addEventListener('click', processarAutenticacao);
   }
 
   const passwordInput = document.getElementById('auth-password');
