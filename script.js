@@ -514,7 +514,7 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato:
     document.getElementById('feedback-po').innerText = res.feedback_po;
 
     const total = Number(res.score_ai) + Number(res.score_cc) + Number(res.score_m) + scorePoVal;
-    document.getElementById('ai-total-score').innerHTML = `<strong>Pontuação: ${total.toFixed(1)} / 20.0</strong>`;
+    document.getElementById('ai-total-score').innerHTML = `<strong>Pontuação total: ${total.toFixed(1)} / 20.0</strong>`;
     document.getElementById('feedback-geral').innerText = res.feedback_geral;
 
     if (card) card.style.display = "block";
