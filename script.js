@@ -436,9 +436,9 @@ async function avaliarRedacaoComIA() {
   }
 
   const prompt = `Você é um corretor de redações profissional. Avalie o texto abaixo sob estas 4 competências:
-1. Argumentação e Informatividade (AI) - Nota de 0 a 8.
-2. Coerência e Coesão (CC) - Nota de 0 a 8.
-3. Morfossintaxe (M) - Nota de 0 a 2.
+1. Argumentação e Informatividade (originalidade, suficiência, correção, relevância e propriedade da informações) (AI) - Nota de 0 a 8.
+2. Coerência e Coesão (organização adequada de parágrafos continuidade e progressão de ideias, uso apropriado de articuladores) (CC) - Nota de 0 a 8.
+3. Morfossintaxe (emprego de pronomes, relação entre as palavras, concordância verbal e nominal, organização e estruturação dos períodos e orações, emprego dos tempos e modos verbais e colocação de pronome) (M) - Nota de 0 a 2.
 4. Pontuação, Acentuação e Ortografia (PO) - Nota de 0 a 2.
 
 Tema: ${temaTexto}
