@@ -406,6 +406,9 @@ select.tool-btn {
 
 .title-input {
   width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  word-wrap: break-word;
   border: none;
   border-bottom: 2px solid var(--text-color);
   font-size: 1.4rem;
@@ -417,6 +420,7 @@ select.tool-btn {
   background: transparent;
   color: var(--text-color);
   box-sizing: border-box;
+  overflow-wrap: break-word;
 }
 
 .editor-wrapper {
