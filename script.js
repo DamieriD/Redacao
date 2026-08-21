@@ -532,14 +532,3 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-
-
-
-
-// Adiciona o ouvinte de clique diretamente ao botão de avaliação
-document.addEventListener('DOMContentLoaded', () => {
-  const btnAvaliar = document.getElementById('ai-eval-btn');
-  if (btnAvaliar) {
-    btnAvaliar.addEventListener('click', avaliarRedacaoComGemini);
-  }
-});
