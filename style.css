@@ -546,3 +546,37 @@ select.tool-btn {
     flex-direction: column;
   }
 }
+
+.btn-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-google:hover {
+  background-color: #f8f9fa;
+  border-color: #bbbbbb;
+}
+
+/* Suporte ao Modo Escuro */
+body.dark-mode .btn-google {
+  background-color: #2a2a2a;
+  color: #ffffff;
+  border-color: #444444;
+}
+
+body.dark-mode .btn-google:hover {
+  background-color: #333333;
+}
