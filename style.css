@@ -411,7 +411,7 @@ select.tool-btn {
   word-wrap: break-word;
   border: none;
   border-bottom: 2px solid var(--text-color);
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-family: inherit;
   font-weight: bold;
   margin-bottom: 25px;
