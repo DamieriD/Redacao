@@ -1,19 +1,14 @@
-// ==========================================
-// CONFIGURAÇÃO SEGURA E INICIALIZAÇÃO
-// ==========================================
 let auth = null;
 let db = null;
 let firebaseConfig = {};
 let GROQ_API_KEY = "";
 
-// Elementos Globais da Interface
 let editor, tema, titulo, rascunho;
 let usuarioAtivo = null;
 let modoCadastro = false;
 let idRedacaoAtual = null;
 let debounceTimer = null;
 
-// Tenta inicializar o Firebase com segurança
 function inicializarFirebase() {
   try {
     if (window.APP_CONFIG) {
@@ -21,16 +16,13 @@ function inicializarFirebase() {
       GROQ_API_KEY = window.APP_CONFIG.groqApiKey || "";
     }
 
-    // Inicializa o app se ainda não estiver inicializado
     if (typeof firebase !== 'undefined') {
       if (firebase.apps && !firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
       }
-      
       auth = firebase.auth();
       db = firebase.firestore();
 
-      // Monitor de Autenticação (Sempre Ativo)
       auth.onAuthStateChanged((user) => {
         const authScreen = document.getElementById('auth-screen');
         const appContent = document.getElementById('app-content');
@@ -38,13 +30,13 @@ function inicializarFirebase() {
 
         if (user) {
           usuarioAtivo = user;
-          if (authScreen) authScreen.style.setProperty('display', 'none', 'important');
+          if (authScreen) authScreen.style.display = 'none';
           if (appContent) appContent.style.display = 'flex';
           if (userDisplay) userDisplay.innerText = user.email;
           carregarHistoricoNuvem();
         } else {
           usuarioAtivo = null;
-          if (authScreen) authScreen.style.setProperty('display', 'flex', 'important');
+          if (authScreen) authScreen.style.display = 'flex';
           if (appContent) appContent.style.display = 'none';
         }
       });
@@ -54,9 +46,6 @@ function inicializarFirebase() {
   }
 }
 
-// ==========================================
-// AUTENTICAÇÃO
-// ==========================================
 function alternarModoAutenticacao() {
   modoCadastro = !modoCadastro;
   const title = document.getElementById('auth-title');
@@ -82,7 +71,7 @@ function alternarModoAutenticacao() {
 
 function processarAutenticacao() {
   if (!auth) {
-    alert("SDK do Firebase não foi carregado corretamente. Verifique as tags <script> no HTML.");
+    alert("Erro: O serviço de autenticação não foi inicializado.");
     return;
   }
 
@@ -130,7 +119,7 @@ function processarAutenticacao() {
 
 function entrarComGoogle() {
   if (!auth) {
-    alert("SDK do Firebase não carregado.");
+    alert("Erro: O serviço de autenticação não foi inicializado.");
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
@@ -165,9 +154,6 @@ function traduzirErroFirebase(codigo) {
   }
 }
 
-// ==========================================
-// MODO ESCURO E TEMAS (Funciona sem Firebase)
-// ==========================================
 function toggleTheme() {
   const body = document.body;
   body.classList.toggle('dark-mode');
@@ -196,9 +182,6 @@ function aplicarTemaSalvo() {
   atualizarBotoesTema(isDark);
 }
 
-// ==========================================
-// BANCO DE DADOS E HISTÓRICO
-// ==========================================
 function salvarProgresso() {
   if (!usuarioAtivo || !db) return;
 
@@ -329,9 +312,6 @@ function deletarRedacao(id, e) {
     .catch(err => console.error("Erro ao deletar:", err));
 }
 
-// ==========================================
-// EDITOR DE TEXTO E UTILITÁRIOS
-// ==========================================
 function aoDigitarNoEditor() {
   atualizarContadores();
   salvarProgresso();
@@ -452,9 +432,6 @@ function toggleSpellcheck() {
   if (btn) btn.innerText = spellcheckAtivo ? '✓ Corretor: ON' : '✗ Corretor: OFF';
 }
 
-// ==========================================
-// AVALIAÇÃO IA (openai/gpt-oss-120b)
-// ==========================================
 async function avaliarRedacaoComIA() {
   const temaTexto = tema ? tema.innerText.trim() : '';
   const tituloTexto = titulo ? titulo.value.trim() : '';
@@ -474,20 +451,17 @@ async function avaliarRedacaoComIA() {
 
   const prompt = `Você é um corretor profissional de redação. Preciso que você faça uma correção detalhada do meu texto, atribuindo uma nota exata e justificando cada ponto de acordo com as seguintes 4 competências:
   
-Argumentação e Informatividade (AI) [0 a 8 pontos]: Avalie a originalidade, a relevância, a correção e a autoria dos meus argumentos. O texto traz repertório suficiente e bem aplicado ao tema?
-Coerência e Coesão (CC) [0 a 8 pontos]: Veja se a estrutura dos parágrafos está bem organizada, se há progressão clara das ideias sem contradições e se usei os conectivos de forma correta e variada.
-Morfossintaxe (M) [0 a 2 pontos]: Analise a estrutura das frases, a concordância verbal e nominal, a regência, os tempos verbais e a colocação pronominal.
-Pontuação, Acentuação e Ortografia (PO) [0 a 2 pontos]: Aponte qualquer desvio gramatical, erro de acentuação, ortografia ou uso incorreto da pontuação (vírgulas, pontos, etc.).
-
-Por favor, aponte os erros diretamente no texto, explique como posso melhorar cada trecho e dê a nota final detalhada por competência. 
-As notas de cada competência podem ser fracionadas (ex.: 6,5 / 1,25). A soma total varia de 0 a 20 pontos.
+Argumentação e Informatividade (AI) [0 a 8 pontos]: Avalie a originalidade, a relevância, a correção e a autoria dos meus argumentos.
+Coerência e Coesão (CC) [0 a 8 pontos]: Veja se a estrutura dos parágrafos está bem organizada, sem contradições e se usei conectivos variados.
+Morfossintaxe (M) [0 a 2 pontos]: Analise concordância, regência e tempos verbais.
+Pontuação, Acentuação e Ortografia (PO) [0 a 2 pontos]: Aponte qualquer desvio gramatical.
 
 Tema: ${temaTexto}
 Título: ${tituloTexto}
 Texto:
 ${texto}
 
-Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou depois):
+Retorne EXCLUSIVAMENTE um JSON válido neste formato exato:
 {
   "score_ai": 0,
   "feedback_ai": "texto",
@@ -552,36 +526,17 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou d
   }
 }
 
-// ==========================================
-// MAPEAMENTO GLOBAL DAS FUNÇÕES (PARA O HTML)
-// ==========================================
-window.processarAutenticacao = processarAutenticacao;
-window.alternarModoAutenticacao = alternarModoAutenticacao;
-window.entrarComGoogle = entrarComGoogle;
-window.fazerLogout = fazerLogout;
-window.avaliarRedacaoComIA = avaliarRedacaoComIA;
-window.toggleTheme = toggleTheme;
-window.toggleSpellcheck = toggleSpellcheck;
-window.execCmd = execCmd;
-window.formatar = execCmd;
-window.inserirTabulacao = inserirTabulacao;
-window.alterarTamanhoFonte = alterarTamanhoFonte;
-window.exportarDocumento = exportarDocumento;
-window.salvarRedacao = exportarDocumento;
-window.salvarProgresso = salvarProgresso;
-window.aoDigitarNoEditor = aoDigitarNoEditor;
-window.novaRedacao = novaRedacao;
-window.carregarRedacao = carregarRedacao;
-window.deletarRedacao = deletarRedacao;
-
-// ==========================================
-// INICIALIZAÇÃO
-// ==========================================
+// Vinculação Segura de Eventos após o DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
   editor = document.getElementById('editor');
   tema = document.getElementById('tema');
   titulo = document.getElementById('titulo');
   rascunho = document.getElementById('rascunho');
+
+  document.getElementById('auth-submit-btn')?.addEventListener('click', processarAutenticacao);
+  document.getElementById('login-theme-btn')?.addEventListener('click', toggleTheme);
+  document.getElementById('auth-toggle-link')?.addEventListener('click', alternarModoAutenticacao);
+  document.getElementById('btn-google-auth')?.addEventListener('click', entrarComGoogle);
 
   aplicarTemaSalvo();
   inicializarFirebase();
