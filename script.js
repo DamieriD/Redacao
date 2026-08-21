@@ -498,3 +498,83 @@ function loginComGoogle() {
       }
     });
 }
+
+
+// substitua pela sua chave da Google AI Studio
+const GEMINI_API_KEY = "AQ.Ab8RN6IiH0CSB4D3KrTS_QLEww5atb3UD713YMYos_X7SzNK0w"; 
+
+async function avaliarRedacaoComGemini() {
+  const tema = document.getElementById('essay-topic')?.value || "Tema livre";
+  const titulo = document.getElementById('essay-title')?.value || "Sem título";
+  const texto = document.getElementById('editor')?.innerText;
+
+  if (!texto || texto.trim().length < 50) {
+    alert("Escreva uma redação com tamanho suficiente antes de avaliar.");
+    return;
+  }
+
+  const promptSistema = `
+Você é um avaliador especialista em redações acadêmicas e escolares. 
+Sua tarefa é analisar a redação fornecida e atribuir notas ESTRITAMENTE conforme os 4 critérios abaixo (Total: 20 pontos):
+
+1. Argumentação e Informatividade dentro do tema (AI) - Nota Máxima: 8.0
+   (Avalie: originalidade, suficiência, correção, relevância e propriedade das informações).
+2. Coerência e Coesão (CC) - Nota Máxima: 8.0
+   (Avalie: organização adequada de parágrafos, continuidade/progressão de ideias e uso de articuladores).
+3. Morfossintaxe (M) - Nota Máxima: 2.0
+   (Avalie: emprego de pronomes, concordância, estrutura de períodos/orações, tempos verbais e colocação pronominal).
+4. Pontuação, Acentuação e Ortografia (PO) - Nota Máxima: 2.0
+   (Avalie: erros ortográficos, acentuação e pontuação).
+
+Retorne EXCLUSIVAMENTE um objeto JSON válido, sem formatação Markdown externa nem blocos de código extra, seguindo esta estrutura exata:
+{
+  "nota_AI": 0.0,
+  "feedback_AI": "Comentário detalhado do critério AI...",
+  "nota_CC": 0.0,
+  "feedback_CC": "Comentário detalhado do critério CC...",
+  "nota_M": 0.0,
+  "feedback_M": "Comentário detalhado do critério M...",
+  "nota_PO": 0.0,
+  "feedback_PO": "Comentário detalhado do critério PO...",
+  "nota_total": 0.0,
+  "comentario_geral": "Análise geral da redação e pontos de melhoria."
+}
+`;
+
+  const corpoRequisicao = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { text: promptSistema },
+          { text: `Tema: ${tema}\nTítulo: ${titulo}\n\nTexto da Redação:\n${texto}` }
+        ]
+      }
+    ],
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.2
+    }
+  };
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpoRequisicao)
+    });
+
+    const data = await response.json();
+    const resultado = JSON.parse(data.candidates[0].content.parts[0].text);
+    
+    exibirResultadoAvaliacao(resultado);
+  } catch (erro) {
+    console.error("Erro na avaliação com Gemini:", erro);
+    alert("Falha ao avaliar a redação. Verifique seu console ou a chave da API.");
+  }
+}
+
+function exibirResultadoAvaliacao(res) {
+  console.log("Resultado da Avaliação:", res);
+  alert(`Nota Total: ${res.nota_total}/20\n\n- AI: ${res.nota_AI}/8\n- CC: ${res.nota_CC}/8\n- M: ${res.nota_M}/2\n- PO: ${res.nota_PO}/2\n\nComentário: ${res.comentario_geral}`);
+}
