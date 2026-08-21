@@ -416,7 +416,7 @@ function atualizarContadores() {
 // ==========================================
 // INTEGRAÇÃO COM GEMINI AI
 // ==========================================
-const GEMINI_API_KEY = "AQ.Ab8RN6IwqrGrn27i7CYdlpStv-iHG57fdevQvC5EPrXuHldHrg"; // Cole aqui sua chave do Google AI Studio
+const GEMINI_API_KEY = "AQ.Ab8RN6JAIyce960-FHu1sCBvMo8ZYZUJAqdM49FWrB1oAJ0dVw"; // Cole aqui sua chave do Google AI Studio
 
 async function avaliarRedacaoComGemini() {
   const temaTexto = tema ? tema.innerText.trim() : '';
