@@ -417,7 +417,7 @@ function atualizarContadores() {
 }
 
 // ==========================================
-// INTEGRAÇÃO COM GEMINI AI
+// INTEGRAÇÃO COM AI
 // ==========================================
 const GROQ_API_KEY = "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"; // Cole sua chave gsk_ aqui
 
