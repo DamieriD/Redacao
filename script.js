@@ -534,3 +534,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btnAvaliar = document.getElementById('ai-eval-btn');
+  if (btnAvaliar) {
+    btnAvaliar.addEventListener('click', avaliarRedacaoComGemini);
+  }
+});
