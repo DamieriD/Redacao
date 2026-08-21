@@ -436,9 +436,9 @@ async function avaliarRedacaoComGemini() {
   }
 
   const prompt = `Você é um corretor de redações. Avalie o texto abaixo sob estas 4 competências:
-1. Argumentação e Informatividade (originalidade, suficiência, correção, relevância e propriedade das informações) (AI) - Nota de 0 a 8.
-2. Coerência e Coesão (organização adequada de parágrafos, continuidade e progressão de ideias, uso apropriado de articuladores) (CC) - Nota de 0 a 8.
-3. Morfossintaxe (emprego de pronomes, relação entre as palavras, concordância verbal e nominal, organização e estruturação dosperíodos e orações, emprego dos tempos e modos verbais e colocaçãode pronome) (M) - Nota de 0 a 2.
+1. Argumentação e Informatividade (AI) - Nota de 0 a 8.
+2. Coerência e Coesão (CC) - Nota de 0 a 8.
+3. Morfossintaxe (M) - Nota de 0 a 2.
 4. Pontuação, Acentuação e Ortografia (PO) - Nota de 0 a 2.
 
 Tema: ${temaTexto}
@@ -460,13 +460,12 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
 }`;
 
   try {
-    // URL sem o parâmetro ?key=
+    // Chamada oficial para a API do Gemini sem a chave na URL
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${GEMINI_API_KEY}`, // Chave enviada no cabeçalho de autorização
-        "x-goog-api-key": GEMINI_API_KEY // Compatibilidade com chave de API
+        "x-goog-api-key": GEMINI_API_KEY // A chave (mesmo começando com AQ) é enviada neste cabeçalho
       },
       body: JSON.stringify({
         contents: [{
