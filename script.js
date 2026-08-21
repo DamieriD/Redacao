@@ -472,11 +472,14 @@ async function avaliarRedacaoComIA() {
     btn.disabled = true;
   }
 
-  const prompt = `Você é um corretor de redações profissional. Avalie o texto abaixo sob estas 4 competências:
-1. Argumentação e Informatividade (originalidade, suficiência, correção, relevância e propriedade da informações) (AI) - Nota de 0 a 8.
-2. Coerência e Coesão (organização adequada de parágrafos continuidade e progressão de ideias, uso apropriado de articuladores) (CC) - Nota de 0 a 8.
-3. Morfossintaxe (emprego de pronomes, relação entre as palavras, concordância verbal e nominal, organização e estruturação dos períodos e orações, emprego dos tempos e modos verbais e colocação de pronome) (M) - Nota de 0 a 2.
-4. Pontuação, Acentuação e Ortografia (PO) - Nota de 0 a 2.
+  const prompt = `Você é um corretor profissional de redação. Preciso que você faça uma correção detalhada do meu texto, atribuindo uma nota exata e justificando cada ponto de acordo com as seguintes 4 competências:
+  
+Argumentação e Informatividade (AI) [0 a 8 pontos]: Avalie a originalidade, a relevância, a correção e a autoria dos meus argumentos. O texto traz repertório suficiente e bem aplicado ao tema?
+Coerência e Coesão (CC) [0 a 8 pontos]: Veja se a estrutura dos parágrafos está bem organizada, se há progressão clara das ideias sem contradições e se usei os conectivos de forma correta e variada.
+Morfossintaxe (M) [0 a 2 pontos]: Analise a estrutura das frases, a concordância verbal e nominal, a regência, os tempos verbais e a colocação pronominal.
+Pontuação, Acentuação e Ortografia (PO) [0 a 2 pontos]: Aponta qualquer desvio gramatical, erro de acentuação, ortografia ou uso incorreto da pontuação (vírgulas, pontos, etc.).
+
+Por favor, aponte os erros diretamente no texto, explique como posso melhorar cada trecho e dê a nota final detalhada por competência (soma total: 0 a 20 podendo ser numero quebrado).
 
 Tema: ${temaTexto}
 Título: ${tituloTexto}
