@@ -80,6 +80,13 @@
         <div class="tool-group">
           <button class="tool-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar Modo Escuro/Claro">🌙 Modo Escuro</button>
           <button class="tool-btn" id="spellcheck-btn" onclick="toggleSpellcheck()" title="Ativar/Desativar Corretor ortográfico">✓ Corretor: ON</button>
+          
+          
+          <!-- teste-->
+          <!-- Dentro do seu <div class="toolbar">, adicione o botão abaixo: -->
+          <button class="tool-btn ai-btn" onclick="avaliarRedacaoComGemini()">✨ Avaliar com IA</button> 
+          <!-- teste-->
+
         </div>
 
         <div class="tool-group">
@@ -138,13 +145,57 @@
             <div id="editor" class="essay-editor" contenteditable="true" spellcheck="true" data-placeholder="Escreva sua redação aqui (máximo 30 linhas)..." oninput="aoDigitarNoEditor()"></div>
           </div>
         </div>
+<div class="sidebar-right">
 
+
+<!-- teste -->
+  <!-- ÁREA DE AVALIAÇÃO DA IA -->
+  <div id="ai-evaluation-card" class="ai-card" style="display: none;">
+    <div class="ai-card-header">
+      <h3>📊 Avaliação do Gemini</h3>
+      <span id="ai-total-score" class="ai-badge">0 / 20</span>
+    </div>
+
+    <div class="ai-scores-grid">
+      <div class="score-item">
+        <strong>Argumentação (AI)</strong>
+        <span id="score-ai">0.0 / 8.0</span>
+        <p id="feedback-ai" class="score-desc"></p>
+      </div>
+
+      <div class="score-item">
+        <strong>Coerência & Coesão (CC)</strong>
+        <span id="score-cc">0.0 / 8.0</span>
+        <p id="feedback-cc" class="score-desc"></p>
+      </div>
+
+      <div class="score-item">
+        <strong>Morfossintaxe (M)</strong>
+        <span id="score-m">0.0 / 2.0</span>
+        <p id="feedback-m" class="score-desc"></p>
+      </div>
+
+      <div class="score-item">
+        <strong>Ortografia & Pontuação (PO)</strong>
+        <span id="score-po">0.0 / 2.0</span>
+        <p id="feedback-po" class="score-desc"></p>
+      </div>
+    </div>
+
+    <div class="ai-summary">
+      <strong>Análise Geral:</strong>
+      <p id="feedback-geral"></p>
+    </div>
+  </div>
+ <!-- teste -->
+        
         <div class="scratchpad">
           <div class="scratchpad-title">📝 Bloco de Rascunho</div>
           <textarea id="rascunho" class="scratch-textarea" spellcheck="true" placeholder="Use este espaço livre para anotações..." oninput="salvarProgresso()"></textarea>
         </div>
       </div>
 
+      
       <!-- Barra de Status -->
       <div class="status-bar">
         
