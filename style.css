@@ -70,6 +70,99 @@ body {
   transition: background-color 0.3s, color 0.3s;
 }
 
+/* TELA DE AUTENTICAÇÃO (LOGIN / REGISTRO) */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: var(--bg-color);
+  z-index: 1000;
+}
+
+.login-card {
+  background: var(--paper-color);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 5px;
+  font-family: sans-serif;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 10px;
+  background-color: var(--button-bg);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-login:hover {
+  background-color: var(--button-hover);
+}
+
+.auth-toggle-text {
+  font-size: 0.85rem;
+  text-align: center;
+  font-family: sans-serif;
+  margin-top: 15px;
+  color: var(--status-text);
+}
+
+.auth-toggle-text a {
+  color: var(--button-bg);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.login-error-msg {
+  color: #a83232;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 10px;
+  font-family: sans-serif;
+}
+
+.login-success-msg {
+  color: #2d5a27;
+  font-size: 0.85rem;
+  text-align: center;
+  margin-top: 10px;
+  font-family: sans-serif;
+}
+
 /* ESTILOS DA BARRA LATERAL (SIDEBAR) */
 .sidebar {
   width: 250px;
@@ -117,6 +210,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  flex: 1;
 }
 
 .history-item {
@@ -161,6 +255,27 @@ body.dark-mode .history-item.active {
 
 .history-item:hover .btn-delete-item {
   display: inline;
+}
+
+.user-info {
+  font-size: 0.8rem;
+  font-family: sans-serif;
+  color: var(--status-text);
+  word-break: break-all;
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-logout {
+  background: #a83232;
+  color: white;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 /* Barra de Ferramentas */
