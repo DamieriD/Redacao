@@ -653,3 +653,8 @@ body.dark-mode .save-status-header {
   padding: 18px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
+
+#ai-total-score {
+  display: block;
+  margin-bottom: 12px;
+}
