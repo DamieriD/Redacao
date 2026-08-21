@@ -430,6 +430,7 @@ select.tool-btn {
   );
 }
 
+/* Container dos números */
 .line-numbers {
   width: 25px; /* Reduz a largura para trazer a linha mais para a esquerda */
   display: flex;
