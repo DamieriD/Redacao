@@ -400,56 +400,71 @@ function atualizarContadores() {
 }
 
 function exportarDocumento() {
-  const formato = document.getElementById('export-format').value;
-  const temaTexto = tema.innerText.trim();
-  const tituloTexto = titulo.value.trim() || 'Minha_Redacao';
-  const rascunhoTexto = rascunho.value;
-  const textoSimples = editor.innerText;
-  const htmlEditor = editor.innerHTML;
+  const format = document.getElementById('export-format').value;
+  
+  // Captura o elemento da folha da redação (ajuste a classe/id se no seu código tiver outro nome)
+  const paperElement = document.querySelector('.paper') || document.querySelector('.essay-paper') || document.querySelector('.editor-container');
 
-  const nomeBase = tituloTexto.replace(/[^a-zA-Z0-9áàâãéèêíóòôõúçÁÀÂÃÉÈÊÍÓÒÔÕÚÇ\s]/g, '').replace(/\s+/g, '_');
+  if (!paperElement) {
+    alert("Elemento da folha não encontrado!");
+    return;
+  }
 
-  if (formato === 'txt') {
-    let conteudoCompleto = '';
-    if (temaTexto !== '') conteudoCompleto += `TEMA: ${temaTexto}\n\n`;
-    conteudoCompleto += `${tituloTexto.toUpperCase()}\n\n${textoSimples}`;
-    if (rascunhoTexto.trim() !== '') {
-      conteudoCompleto += `\n\n----------------------------------------\nNOTAS DE RASCUNHO:\n\n${rascunhoTexto}`;
-    }
-    baixarArquivo(conteudoCompleto, `${nomeBase}.txt`, 'text/plain;charset=utf-8');
-  } 
-  else if (formato === 'doc') {
-    let conteudoHTML = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><meta charset='utf-8'><title>${tituloTexto}</title></head>
-      <body style="font-family: Georgia, serif;">
-    `;
-    if (temaTexto !== '') conteudoHTML += `<p><i><b>Tema:</b> ${temaTexto}</i></p>`;
-    conteudoHTML += `<h2>${tituloTexto.toUpperCase()}</h2><div>${htmlEditor}</div>`;
-    if (rascunhoTexto.trim() !== '') {
-      conteudoHTML += `<hr/><br/><h3>NOTAS DE RASCUNHO:</h3><p>${rascunhoTexto.replace(/\n/g, '<br/>')}</p>`;
-    }
-    conteudoHTML += `</body></html>`;
+  // Nome do arquivo baseado no título ou padrão
+  const titleInput = document.getElementById('essay-title') || document.querySelector('.essay-title');
+  const fileName = (titleInput && titleInput.value.trim()) ? titleInput.value.trim() : 'Minha_Redacao';
 
-    baixarArquivo(conteudoHTML, `${nomeBase}.doc`, 'application/msword');
-  } 
-  else if (formato === 'pdf') {
-    const elemento = document.getElementById('paper-to-print');
-    elemento.classList.add('printing');
+  if (format === 'png' || format === 'jpg') {
+    // Opções de renderização com boa qualidade
+    html2canvas(paperElement, {
+      scale: 2, // Aumenta a resolução do "print"
+      useCORS: true,
+      backgroundColor: null // Mantém o fundo original da folha
+    }).then(canvas => {
+      const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+      const imageURL = canvas.toDataURL(mimeType, 0.95);
 
-    const opcoes = {
-      margin:       0,
-      filename:     `${nomeBase}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opcoes).from(elemento).save().then(() => {
-      elemento.classList.remove('printing');
-    }).catch(() => {
-      elemento.classList.remove('printing');
+      // Cria o elemento para download automático
+      const downloadLink = document.createElement('a');
+      downloadLink.href = imageURL;
+      downloadLink.download = `${fileName}.${format}`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }).catch(err => {
+      console.error("Erro ao gerar a imagem:", err);
+      alert("Ocorreu um erro ao gerar a imagem da redação.");
     });
+  } else if (format === 'pdf') {
+    // Lógica para exportar em PDF (caso já utilize html2pdf)
+    if (typeof html2pdf !== 'undefined') {
+      const opt = {
+        margin: 10,
+        filename: `${fileName}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(paperElement).save();
+    }
+  } else if (format === 'txt') {
+    // Exportação em TXT
+    const textContent = document.getElementById('editor')?.innerText || paperElement.innerText;
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `${fileName}.txt`;
+    downloadLink.click();
+  } else if (format === 'doc') {
+    // Exportação em DOC (HTML mascarado)
+    const textContent = document.getElementById('editor')?.innerHTML || paperElement.innerHTML;
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
+    const footer = "</body></html>";
+    const blob = new Blob([header + textContent + footer], { type: 'application/msword' });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `${fileName}.doc`;
+    downloadLink.click();
   }
 }
 
