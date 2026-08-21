@@ -17,21 +17,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // Elementos da Interface
-const lineNumbersContainer = document.getElementById('line-numbers');
-if (lineNumbersContainer) {
-  for (let i = 1; i <= 30; i++) {
-    const lineDiv = document.createElement('div');
-    lineDiv.className = 'line-number';
-    lineDiv.innerText = i;
-    lineNumbersContainer.appendChild(lineDiv);
-  }
-}
-
-const editor = document.getElementById('editor');
-const tema = document.getElementById('tema');
-const titulo = document.getElementById('titulo');
-const rascunho = document.getElementById('rascunho');
-
+let editor, tema, titulo, rascunho;
 let usuarioAtivo = null;
 let modoCadastro = false;
 let idRedacaoAtual = null;
@@ -308,6 +294,88 @@ function aoDigitarNoEditor() {
 }
 
 // ==========================================
+// FUNÇÕES DA BARRA DE FERRAMENTAS DO EDITOR
+// ==========================================
+function formatar(comando, valor = null) {
+  if (!editor) return;
+  editor.focus();
+  document.execCommand(comando, false, valor);
+  aoDigitarNoEditor();
+}
+
+function inserirTabulacao() {
+  if (!editor) return;
+  editor.focus();
+  document.execCommand('insertHTML', false, '&#09;');
+  aoDigitarNoEditor();
+}
+
+function alterarTamanhoFonte(tamanho) {
+  if (!tamanho || !editor) return;
+  const selecao = window.getSelection();
+  if (selecao.rangeCount > 0 && !selecao.isCollapsed) {
+    const span = document.createElement('span');
+    span.style.fontSize = tamanho;
+    const range = selecao.getRangeAt(0);
+    range.surroundContents(span);
+  } else {
+    editor.style.fontSize = tamanho;
+  }
+  salvarProgresso();
+}
+
+function salvarRedacao() {
+  if (!editor) return;
+  const formato = document.getElementById('export-format')?.value || '.txt';
+  const tituloTexto = (titulo && titulo.value.trim()) ? titulo.value.trim() : 'Minha_Redacao';
+  const conteudoTexto = editor.innerText || '';
+
+  let blob, extensao;
+  if (formato === '.html') {
+    blob = new Blob([`<html><body><h2>${tituloTexto}</h2><p>${editor.innerHTML}</p></body></html>`], { type: 'text/html;charset=utf-8' });
+    extensao = '.html';
+  } else {
+    blob = new Blob([`${tituloTexto}\n\n${conteudoTexto}`], { type: 'text/plain;charset=utf-8' });
+    extensao = '.txt';
+  }
+
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${tituloTexto}${extensao}`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function handleTabIndent(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+
+    if (e.target === editor || editor.contains(e.target)) {
+      document.execCommand('insertHTML', false, '&#09;');
+      aoDigitarNoEditor();
+    } else if (e.target === rascunho) {
+      const start = rascunho.selectionStart;
+      const end = rascunho.selectionEnd;
+      rascunho.value = rascunho.value.substring(0, start) + "\t" + rascunho.value.substring(end);
+      rascunho.selectionStart = rascunho.selectionEnd = start + 1;
+    }
+  }
+}
+
+function atualizarContadores() {
+  if (!editor) return;
+  const texto = editor.innerText || '';
+  const palavras = texto.trim() ? texto.trim().split(/\s+/).length : 0;
+  const caracteres = texto.length;
+  
+  const wordCountEl = document.getElementById('word-count');
+  const charCountEl = document.getElementById('char-count');
+  
+  if (wordCountEl) wordCountEl.innerText = `Palavras: ${palavras}`;
+  if (charCountEl) charCountEl.innerText = `Caracteres: ${caracteres}`;
+}
+
+// ==========================================
 // PERSISTÊNCIA E ALTERNÂNCIA DO MODO ESCURO
 // ==========================================
 function toggleTheme() {
@@ -342,12 +410,6 @@ function aplicarTemaSalvo() {
   atualizarBotoesTema(isDark);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', aplicarTemaSalvo);
-} else {
-  aplicarTemaSalvo();
-}
-
 let spellcheckAtivo = true;
 function toggleSpellcheck() {
   spellcheckAtivo = !spellcheckAtivo;
@@ -363,63 +425,10 @@ function toggleSpellcheck() {
   if (btn) btn.innerText = spellcheckAtivo ? '✓ Corretor: ON' : '✗ Corretor: OFF';
 }
 
-function inserirTabulacao() {
-  if (!editor) return;
-  editor.focus();
-  document.execCommand('insertHTML', false, '&#09;');
-  aoDigitarNoEditor();
-}
-
-function alterarTamanhoFonte(tamanho) {
-  if (!tamanho || !editor) return;
-  const selecao = window.getSelection();
-  if (selecao.rangeCount > 0 && !selecao.isCollapsed) {
-    const span = document.createElement('span');
-    span.style.fontSize = tamanho;
-    const range = selecao.getRangeAt(0);
-    range.surroundContents(span);
-  } else {
-    editor.style.fontSize = tamanho;
-  }
-  salvarProgresso();
-}
-
-function handleTabIndent(e) {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-
-    if (e.target === editor) {
-      // Insere o caractere de tabulação no editor
-      document.execCommand('insertHTML', false, '&#09;');
-      if (typeof aoDigitarNoEditor === 'function') aoDigitarNoEditor();
-    } 
-    else if (e.target === rascunho) {
-      // Insere o caractere de tabulação na textarea de rascunho
-      const start = rascunho.selectionStart;
-      const end = rascunho.selectionEnd;
-      rascunho.value = rascunho.value.substring(0, start) + "\t" + rascunho.value.substring(end);
-      rascunho.selectionStart = rascunho.selectionEnd = start + 1;
-    }
-  }
-}
-
-function atualizarContadores() {
-  if (!editor) return;
-  const texto = editor.innerText || '';
-  const palavras = texto.trim() ? texto.trim().split(/\s+/).length : 0;
-  const caracteres = texto.length;
-  
-  const wordCountEl = document.getElementById('word-count');
-  const charCountEl = document.getElementById('char-count');
-  
-  if (wordCountEl) wordCountEl.innerText = `Palavras: ${palavras}`;
-  if (charCountEl) charCountEl.innerText = `Caracteres: ${caracteres}`;
-}
-
 // ==========================================
-// INTEGRAÇÃO COM AI
+// INTEGRAÇÃO COM GROQ AI
 // ==========================================
-const GROQ_API_KEY = "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"; // Cole sua chave gsk_ aqui
+const GROQ_API_KEY = "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";
 
 async function avaliarRedacaoComIA() {
   const temaTexto = tema ? tema.innerText.trim() : '';
@@ -470,7 +479,7 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou d
         "Authorization": `Bearer ${GROQ_API_KEY}`
       },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b", // Modelo gratuito super inteligente e rápido
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }
       })
@@ -493,10 +502,11 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou d
     document.getElementById('score-m').innerText = `${Number(res.score_m).toFixed(1)} / 2.0`;
     document.getElementById('feedback-m').innerText = res.feedback_m;
 
-    document.getElementById('score-po').innerText = `${Number(res.score_po).innerText = res.score_po ? Number(res.score_po).toFixed(1) : "0.0"} / 2.0`;
+    const scorePoVal = res.score_po ? Number(res.score_po) : 0.0;
+    document.getElementById('score-po').innerText = `${scorePoVal.toFixed(1)} / 2.0`;
     document.getElementById('feedback-po').innerText = res.feedback_po;
 
-    const total = Number(res.score_ai) + Number(res.score_cc) + Number(res.score_m) + Number(res.score_po);
+    const total = Number(res.score_ai) + Number(res.score_cc) + Number(res.score_m) + scorePoVal;
     document.getElementById('ai-total-score').innerText = `${total.toFixed(1)} / 20.0`;
     document.getElementById('feedback-geral').innerText = res.feedback_geral;
 
@@ -512,31 +522,59 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou d
     }
   }
 }
-// Expor funções globais
+
+// Expor funções globais para os onclick do HTML
 window.processarAutenticacao = processarAutenticacao;
 window.alternarModoAutenticacao = alternarModoAutenticacao;
 window.entrarComGoogle = entrarComGoogle;
 window.fazerLogout = fazerLogout;
-window.avaliarRedacaoComGemini = avaliarRedacaoComGemini;
+window.avaliarRedacaoComIA = avaliarRedacaoComIA;
+window.toggleTheme = toggleTheme;
+window.toggleSpellcheck = toggleSpellcheck;
+window.formatar = formatar;
+window.inserirTabulacao = inserirTabulacao;
+window.alterarTamanhoFonte = alterarTamanhoFonte;
+window.salvarRedacao = salvarRedacao;
+window.novaRedacao = novaRedacao;
+window.carregarRedacao = carregarRedacao;
+window.deletarRedacao = deletarRedacao;
 
-// Vincular botões da tela de autenticação
+// Mapear elementos e registrar atalhos após o DOM carregar
 document.addEventListener('DOMContentLoaded', () => {
+  editor = document.getElementById('editor');
+  tema = document.getElementById('tema');
+  titulo = document.getElementById('titulo');
+  rascunho = document.getElementById('rascunho');
+
+  const lineNumbersContainer = document.getElementById('line-numbers');
+  if (lineNumbersContainer && lineNumbersContainer.children.length === 0) {
+    for (let i = 1; i <= 30; i++) {
+      const lineDiv = document.createElement('div');
+      lineDiv.className = 'line-number';
+      lineDiv.innerText = i;
+      lineNumbersContainer.appendChild(lineDiv);
+    }
+  }
+
+  if (editor) {
+    editor.addEventListener('input', aoDigitarNoEditor);
+    editor.addEventListener('keydown', handleTabIndent);
+  }
+  if (rascunho) {
+    rascunho.addEventListener('keydown', handleTabIndent);
+  }
+
   const submitBtn = document.getElementById('auth-submit-btn');
   if (submitBtn) {
     submitBtn.addEventListener('click', processarAutenticacao);
   }
 
-  // Permite pressionar "Enter" nos campos de e-mail/senha para entrar
   const passwordInput = document.getElementById('auth-password');
   if (passwordInput) {
     passwordInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') processarAutenticacao();
     });
   }
-});
 
-//tabulção TAB
-document.addEventListener('DOMContentLoaded', () => {
-  if (editor) editor.addEventListener('keydown', handleTabIndent);
-  if (rascunho) rascunho.addEventListener('keydown', handleTabIndent);
+  aplicarTemaSalvo();
 });
