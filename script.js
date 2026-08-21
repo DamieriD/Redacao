@@ -1,15 +1,8 @@
 // ==========================================
-// CONFIGURAÇÃO DO FIREBASE
+// CARREGAMENTO DAS CONFIGURAÇÕES DAS APIS
 // ==========================================
-const firebaseConfig = {
-  apiKey: "AIzaSyBhY331nB6_AIcqZ9NCX6bBCTLfqeDydC4",
-  authDomain: "redacao-damieri.firebaseapp.com",
-  projectId: "redacao-damieri",
-  storageBucket: "redacao-damieri.firebasestorage.app",
-  messagingSenderId: "97816688466",
-  appId: "1:97816688466:web:44679682c4a9d83113ac8b",
-  measurementId: "G-MGBQJ5GB1X"
-};
+const firebaseConfig = window.APP_CONFIG ? window.APP_CONFIG.firebase : {};
+const GROQ_API_KEY = window.APP_CONFIG ? window.APP_CONFIG.groqApiKey : "";
 
 // Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
@@ -324,7 +317,7 @@ function alterarTamanhoFonte(tamanho) {
   salvarProgresso();
 }
 
-// Suporte para exportação em .TXT, .DOC, .PDF, .PNG e .JPG (usando as libs do index.html)
+// Suporte para exportação em .TXT, .DOC, .PDF, .PNG e .JPG
 function exportarDocumento() {
   if (!editor) return;
   const formato = document.getElementById('export-format')?.value || 'txt';
@@ -453,8 +446,6 @@ function toggleSpellcheck() {
 // ==========================================
 // INTEGRAÇÃO COM GROQ AI
 // ==========================================
-const GROQ_API_KEY = "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";
-
 async function avaliarRedacaoComIA() {
   const temaTexto = tema ? tema.innerText.trim() : '';
   const tituloTexto = titulo ? titulo.value.trim() : '';
