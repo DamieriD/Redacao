@@ -286,9 +286,7 @@ function aoDigitarNoEditor() {
   salvarProgresso();
 }
 
-// ==========================================
-// FERRAMENTAS DO EDITOR E EXPORTAÇÃO
-// ==========================================
+
 // ==========================================
 // PERSISTÊNCIA E ALTERNÂNCIA DO MODO ESCURO
 // ==========================================
@@ -311,17 +309,25 @@ function atualizarBotoesTema(isDark) {
   if (loginThemeBtn) loginThemeBtn.innerText = texto;
 }
 
-// Aplica a preferência assim que o script carrega
-(function aplicarTemaSalvo() {
+function aplicarTemaSalvo() {
   const temaSalvo = localStorage.getItem('themePreference');
-  if (temaSalvo === 'dark') {
+  const isDark = temaSalvo === 'dark';
+
+  if (isDark) {
     document.body.classList.add('dark-mode');
-    atualizarBotoesTema(true);
   } else {
     document.body.classList.remove('dark-mode');
-    atualizarBotoesTema(false);
   }
-})();
+  
+  atualizarBotoesTema(isDark);
+}
+
+// Garante que o tema será aplicado logo após a página carregar por completo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', aplicarTemaSalvo);
+} else {
+  aplicarTemaSalvo();
+}
 
 let spellcheckAtivo = true;
 function toggleSpellcheck() {
