@@ -498,3 +498,85 @@ function loginComGoogle() {
       }
     });
 }
+
+// ==========================================
+// gemini integração
+// ==========================================
+const GEMINI_API_KEY = "AQ.Ab8RN6IwqrGrn27i7CYdlpStv-iHG57fdevQvC5EPrXuHldHrgI"; 
+
+async function avaliarRedacaoComGemini() {
+  const tema = document.getElementById('tema').innerText.trim();
+  const titulo = document.getElementById('titulo').value.trim();
+  const texto = document.getElementById('editor').innerText.trim();
+  const card = document.getElementById('ai-evaluation-card');
+  const btn = document.querySelector('.ai-btn-main');
+
+  if (!texto) {
+    alert("Escreva sua redação antes de solicitar a avaliação.");
+    return;
+  }
+
+  btn.innerText = "⏳ Avaliando...";
+  btn.disabled = true;
+
+  const systemPrompt = `Você é um corretor de redações bancas examinadoras. Avalie o texto estritamente sob estas 4 competências:
+1. Argumentação e Informatividade (AI) - Nota de 0 a 8.
+2. Coerência e Coesão (CC) - Nota de 0 a 8.
+3. Morfossintaxe (M) - Nota de 0 a 2.
+4. Pontuação, Acentuação e Ortografia (PO) - Nota de 0 a 2.
+
+Retorne EXCLUSIVAMENTE um objeto JSON válido no formato:
+{
+  "score_ai": number,
+  "feedback_ai": "string",
+  "score_cc": number,
+  "feedback_cc": "string",
+  "score_m": number,
+  "feedback_m": "string",
+  "score_po": number,
+  "feedback_po": "string",
+  "feedback_geral": "string"
+}`;
+
+  const userContent = `Tema: ${tema}\nTítulo: ${titulo}\nTexto:\n${texto}`;
+
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: systemPrompt + "\n\n" + userContent }] }],
+        generationConfig: { responseMimeType: "application/json" }
+      })
+    });
+
+    const data = await response.json();
+    const resultText = data.candidates[0].content.parts[0].text;
+    const res = JSON.parse(resultText);
+
+    // Atualização das notas na interface
+    document.getElementById('score-ai').innerText = `${res.score_ai.toFixed(1)} / 8.0`;
+    document.getElementById('feedback-ai').innerText = res.feedback_ai;
+
+    document.getElementById('score-cc').innerText = `${res.score_cc.toFixed(1)} / 8.0`;
+    document.getElementById('feedback-cc').innerText = res.feedback_cc;
+
+    document.getElementById('score-m').innerText = `${res.score_m.toFixed(1)} / 2.0`;
+    document.getElementById('feedback-m').innerText = res.feedback_m;
+
+    document.getElementById('score-po').innerText = `${res.score_po.toFixed(1)} / 2.0`;
+    document.getElementById('feedback-po').innerText = res.feedback_po;
+
+    const total = res.score_ai + res.score_cc + res.score_m + res.score_po;
+    document.getElementById('ai-total-score').innerText = `${total.toFixed(1)} / 20.0`;
+    document.getElementById('feedback-geral').innerText = res.feedback_geral;
+
+    card.style.display = "block";
+  } catch (error) {
+    console.error(error);
+    alert("Falha ao realizar a avaliação pela IA.");
+  } finally {
+    btn.innerText = "✨ Avaliar Redação com IA";
+    btn.disabled = false;
+  }
+}
