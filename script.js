@@ -289,17 +289,39 @@ function aoDigitarNoEditor() {
 // ==========================================
 // FERRAMENTAS DO EDITOR E EXPORTAÇÃO
 // ==========================================
+// ==========================================
+// PERSISTÊNCIA E ALTERNÂNCIA DO MODO ESCURO
+// ==========================================
 function toggleTheme() {
   const body = document.body;
-  const themeBtn = document.getElementById('theme-btn');
   body.classList.toggle('dark-mode');
-
-  if (body.classList.contains('dark-mode')) {
-    themeBtn.innerText = '☀️ Modo Claro';
-  } else {
-    themeBtn.innerText = '🌙 Modo Escuro';
-  }
+  
+  const isDark = body.classList.contains('dark-mode');
+  localStorage.setItem('themePreference', isDark ? 'dark' : 'light');
+  
+  atualizarBotoesTema(isDark);
 }
+
+function atualizarBotoesTema(isDark) {
+  const texto = isDark ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+  const themeBtn = document.getElementById('theme-btn');
+  const loginThemeBtn = document.getElementById('login-theme-btn');
+  
+  if (themeBtn) themeBtn.innerText = texto;
+  if (loginThemeBtn) loginThemeBtn.innerText = texto;
+}
+
+// Aplica a preferência assim que o script carrega
+(function aplicarTemaSalvo() {
+  const temaSalvo = localStorage.getItem('themePreference');
+  if (temaSalvo === 'dark') {
+    document.body.classList.add('dark-mode');
+    atualizarBotoesTema(true);
+  } else {
+    document.body.classList.remove('dark-mode');
+    atualizarBotoesTema(false);
+  }
+})();
 
 let spellcheckAtivo = true;
 function toggleSpellcheck() {
