@@ -580,3 +580,17 @@ body.dark-mode .btn-google {
 body.dark-mode .btn-google:hover {
   background-color: #333333;
 }
+
+.save-status-header {
+  font-size: 13px;
+  color: #2e7d32;
+  margin: 6px 0 6px 4px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+}
+
+body.dark-mode .save-status-header {
+  color: #81c784;
+}
