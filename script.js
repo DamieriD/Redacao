@@ -21,12 +21,16 @@ function inicializarFirebase() {
       GROQ_API_KEY = window.APP_CONFIG.groqApiKey || "";
     }
 
-    if (typeof firebase !== 'undefined' && firebase.apps && !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+    // Inicializa o app se ainda não estiver inicializado
+    if (typeof firebase !== 'undefined') {
+      if (firebase.apps && !firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      
       auth = firebase.auth();
       db = firebase.firestore();
 
-      // Monitor de Autenticação
+      // Monitor de Autenticação (Sempre Ativo)
       auth.onAuthStateChanged((user) => {
         const authScreen = document.getElementById('auth-screen');
         const appContent = document.getElementById('app-content');
@@ -34,13 +38,13 @@ function inicializarFirebase() {
 
         if (user) {
           usuarioAtivo = user;
-          if (authScreen) authScreen.style.display = 'none';
+          if (authScreen) authScreen.style.setProperty('display', 'none', 'important');
           if (appContent) appContent.style.display = 'flex';
           if (userDisplay) userDisplay.innerText = user.email;
           carregarHistoricoNuvem();
         } else {
           usuarioAtivo = null;
-          if (authScreen) authScreen.style.display = 'flex';
+          if (authScreen) authScreen.style.setProperty('display', 'flex', 'important');
           if (appContent) appContent.style.display = 'none';
         }
       });
