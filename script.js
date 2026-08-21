@@ -1,39 +1,58 @@
 // ==========================================
-// CARREGAMENTO DAS CONFIGURAÇÕES DAS APIS
+// CONFIGURAÇÃO SEGURA E INICIALIZAÇÃO
 // ==========================================
-const firebaseConfig = window.APP_CONFIG ? window.APP_CONFIG.firebase : {};
-const GROQ_API_KEY = window.APP_CONFIG ? window.APP_CONFIG.groqApiKey : "";
+let auth = null;
+let db = null;
+let firebaseConfig = {};
+let GROQ_API_KEY = "";
 
-// Inicializa o Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// Elementos da Interface
+// Elementos Globais da Interface
 let editor, tema, titulo, rascunho;
 let usuarioAtivo = null;
 let modoCadastro = false;
 let idRedacaoAtual = null;
 let debounceTimer = null;
 
-// ==========================================
-// AUTENTICAÇÃO COM FIREBASE
-// ==========================================
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    usuarioAtivo = user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'flex';
-    document.getElementById('user-display-email').innerText = user.email;
+// Tenta inicializar o Firebase com segurança
+function inicializarFirebase() {
+  try {
+    if (window.APP_CONFIG) {
+      firebaseConfig = window.APP_CONFIG.firebase || {};
+      GROQ_API_KEY = window.APP_CONFIG.groqApiKey || "";
+    }
 
-    carregarHistoricoNuvem();
-  } else {
-    usuarioAtivo = null;
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-content').style.display = 'none';
+    if (typeof firebase !== 'undefined' && firebase.apps && !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+
+      // Monitor de Autenticação
+      auth.onAuthStateChanged((user) => {
+        const authScreen = document.getElementById('auth-screen');
+        const appContent = document.getElementById('app-content');
+        const userDisplay = document.getElementById('user-display-email');
+
+        if (user) {
+          usuarioAtivo = user;
+          if (authScreen) authScreen.style.display = 'none';
+          if (appContent) appContent.style.display = 'flex';
+          if (userDisplay) userDisplay.innerText = user.email;
+          carregarHistoricoNuvem();
+        } else {
+          usuarioAtivo = null;
+          if (authScreen) authScreen.style.display = 'flex';
+          if (appContent) appContent.style.display = 'none';
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Erro ao inicializar Firebase:", err);
   }
-});
+}
 
+// ==========================================
+// AUTENTICAÇÃO
+// ==========================================
 function alternarModoAutenticacao() {
   modoCadastro = !modoCadastro;
   const title = document.getElementById('auth-title');
@@ -58,6 +77,11 @@ function alternarModoAutenticacao() {
 }
 
 function processarAutenticacao() {
+  if (!auth) {
+    alert("SDK do Firebase não foi carregado corretamente. Verifique as tags <script> no HTML.");
+    return;
+  }
+
   const emailInput = document.getElementById('auth-email')?.value.trim();
   const passwordInput = document.getElementById('auth-password')?.value;
   const msg = document.getElementById('auth-message');
@@ -101,6 +125,10 @@ function processarAutenticacao() {
 }
 
 function entrarComGoogle() {
+  if (!auth) {
+    alert("SDK do Firebase não carregado.");
+    return;
+  }
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider).catch((error) => {
     const msg = document.getElementById('auth-message');
@@ -113,7 +141,7 @@ function entrarComGoogle() {
 }
 
 function fazerLogout() {
-  auth.signOut();
+  if (auth) auth.signOut();
 }
 
 function traduzirErroFirebase(codigo) {
@@ -134,10 +162,41 @@ function traduzirErroFirebase(codigo) {
 }
 
 // ==========================================
-// ARMAZENAMENTO NA NUVEM (FIRESTORE)
+// MODO ESCURO E TEMAS (Funciona sem Firebase)
+// ==========================================
+function toggleTheme() {
+  const body = document.body;
+  body.classList.toggle('dark-mode');
+  const isDark = body.classList.contains('dark-mode');
+  localStorage.setItem('themePreference', isDark ? 'dark' : 'light');
+  atualizarBotoesTema(isDark);
+}
+
+function atualizarBotoesTema(isDark) {
+  const texto = isDark ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+  const themeBtn = document.getElementById('theme-btn');
+  const loginThemeBtn = document.getElementById('login-theme-btn');
+
+  if (themeBtn) themeBtn.innerText = texto;
+  if (loginThemeBtn) loginThemeBtn.innerText = texto;
+}
+
+function aplicarTemaSalvo() {
+  const temaSalvo = localStorage.getItem('themePreference');
+  const isDark = temaSalvo === 'dark';
+  if (isDark) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  atualizarBotoesTema(isDark);
+}
+
+// ==========================================
+// BANCO DE DADOS E HISTÓRICO
 // ==========================================
 function salvarProgresso() {
-  if (!usuarioAtivo) return;
+  if (!usuarioAtivo || !db) return;
 
   const statusEl = document.getElementById('save-status');
   if (statusEl) statusEl.innerText = '⏳ Salvando...';
@@ -172,7 +231,7 @@ function salvarProgresso() {
 }
 
 function carregarHistoricoNuvem() {
-  if (!usuarioAtivo) return;
+  if (!usuarioAtivo || !db) return;
 
   db.collection('usuarios')
     .doc(usuarioAtivo.uid)
@@ -194,15 +253,12 @@ function carregarHistoricoNuvem() {
         const item = doc.data();
         const id = doc.id;
 
-        if (id === idRedacaoAtual) {
-          encontrouAtual = true;
-        }
+        if (id === idRedacaoAtual) encontrouAtual = true;
 
         const div = document.createElement('div');
         div.className = `history-item ${id === idRedacaoAtual ? 'active' : ''}`;
-        
         const tituloExibicao = item.titulo && item.titulo.trim() !== '' ? item.titulo : 'Sem título';
-        
+
         div.innerHTML = `
           <span onclick="carregarRedacao('${id}')" style="flex: 1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📝 ${tituloExibicao}</span>
           <button class="btn-delete-item" onclick="deletarRedacao('${id}', event)">✕</button>
@@ -212,20 +268,17 @@ function carregarHistoricoNuvem() {
 
       if (!idRedacaoAtual || !encontrouAtual) {
         const primeiraDoc = snapshot.docs[0];
-        if (primeiraDoc) {
-          carregarRedacao(primeiraDoc.id);
-        }
+        if (primeiraDoc) carregarRedacao(primeiraDoc.id);
       }
     }, (error) => {
-      console.error("Erro ao escutar histórico:", error);
+      console.error("Erro ao carregar histórico:", error);
     });
 }
 
 function carregarRedacao(id) {
-  if (!usuarioAtivo || !id) return;
+  if (!usuarioAtivo || !id || !db) return;
 
   idRedacaoAtual = id;
-
   const itens = document.querySelectorAll('.history-item');
   itens.forEach(el => el.classList.remove('active'));
 
@@ -242,13 +295,6 @@ function carregarRedacao(id) {
         if (editor) editor.innerHTML = dados.conteudo || '';
         if (rascunho) rascunho.value = dados.rascunho || '';
         atualizarContadores();
-        
-        const historicoItens = document.querySelectorAll('.history-item');
-        historicoItens.forEach(item => {
-          if (item.querySelector('span')?.getAttribute('onclick')?.includes(id)) {
-            item.classList.add('active');
-          }
-        });
       }
     })
     .catch(err => console.error("Erro ao carregar redação:", err));
@@ -265,8 +311,8 @@ function novaRedacao() {
 }
 
 function deletarRedacao(id, e) {
-  e.stopPropagation();
-  if (!usuarioAtivo) return;
+  if (e) e.stopPropagation();
+  if (!usuarioAtivo || !db) return;
 
   db.collection('usuarios')
     .doc(usuarioAtivo.uid)
@@ -274,21 +320,19 @@ function deletarRedacao(id, e) {
     .doc(id)
     .delete()
     .then(() => {
-      if (id === idRedacaoAtual) {
-        idRedacaoAtual = null;
-      }
+      if (id === idRedacaoAtual) idRedacaoAtual = null;
     })
     .catch(err => console.error("Erro ao deletar:", err));
 }
 
+// ==========================================
+// EDITOR DE TEXTO E UTILITÁRIOS
+// ==========================================
 function aoDigitarNoEditor() {
   atualizarContadores();
   salvarProgresso();
 }
 
-// ==========================================
-// FUNÇÕES DA BARRA DE FERRAMENTAS DO EDITOR
-// ==========================================
 function execCmd(comando, valor = null) {
   if (!editor) return;
   editor.focus();
@@ -317,7 +361,6 @@ function alterarTamanhoFonte(tamanho) {
   salvarProgresso();
 }
 
-// Suporte para exportação em .TXT, .DOC, .PDF, .PNG e .JPG
 function exportarDocumento() {
   if (!editor) return;
   const formato = document.getElementById('export-format')?.value || 'txt';
@@ -367,7 +410,6 @@ function exportarDocumento() {
 function handleTabIndent(e) {
   if (e.key === 'Tab') {
     e.preventDefault();
-
     if (e.target === editor || editor.contains(e.target)) {
       document.execCommand('insertHTML', false, '&#09;');
       aoDigitarNoEditor();
@@ -385,47 +427,12 @@ function atualizarContadores() {
   const texto = editor.innerText || '';
   const palavras = texto.trim() ? texto.trim().split(/\s+/).length : 0;
   const caracteres = texto.length;
-  
+
   const wordCountEl = document.getElementById('word-count');
   const charCountEl = document.getElementById('char-count');
-  
+
   if (wordCountEl) wordCountEl.innerText = `Palavras: ${palavras}`;
   if (charCountEl) charCountEl.innerText = `Caracteres: ${caracteres}`;
-}
-
-// ==========================================
-// PERSISTÊNCIA E ALTERNÂNCIA DO MODO ESCURO
-// ==========================================
-function toggleTheme() {
-  const body = document.body;
-  body.classList.toggle('dark-mode');
-  
-  const isDark = body.classList.contains('dark-mode');
-  localStorage.setItem('themePreference', isDark ? 'dark' : 'light');
-  
-  atualizarBotoesTema(isDark);
-}
-
-function atualizarBotoesTema(isDark) {
-  const texto = isDark ? '☀️ Modo Claro' : '🌙 Modo Escuro';
-  const themeBtn = document.getElementById('theme-btn');
-  const loginThemeBtn = document.getElementById('login-theme-btn');
-  
-  if (themeBtn) themeBtn.innerText = texto;
-  if (loginThemeBtn) loginThemeBtn.innerText = texto;
-}
-
-function aplicarTemaSalvo() {
-  const temaSalvo = localStorage.getItem('themePreference');
-  const isDark = temaSalvo === 'dark';
-
-  if (isDark) {
-    document.body.classList.add('dark-mode');
-  } else {
-    document.body.classList.remove('dark-mode');
-  }
-  
-  atualizarBotoesTema(isDark);
 }
 
 let spellcheckAtivo = true;
@@ -435,16 +442,14 @@ function toggleSpellcheck() {
   const campos = [editor, tema, titulo, rascunho];
 
   campos.forEach(campo => {
-    if (campo) {
-      campo.setAttribute('spellcheck', spellcheckAtivo ? 'true' : 'false');
-    }
+    if (campo) campo.setAttribute('spellcheck', spellcheckAtivo ? 'true' : 'false');
   });
 
   if (btn) btn.innerText = spellcheckAtivo ? '✓ Corretor: ON' : '✗ Corretor: OFF';
 }
 
 // ==========================================
-// INTEGRAÇÃO COM GROQ AI
+// AVALIAÇÃO IA (openai/gpt-oss-120b)
 // ==========================================
 async function avaliarRedacaoComIA() {
   const temaTexto = tema ? tema.innerText.trim() : '';
@@ -465,10 +470,10 @@ async function avaliarRedacaoComIA() {
 
   const prompt = `Você é um corretor profissional de redação. Preciso que você faça uma correção detalhada do meu texto, atribuindo uma nota exata e justificando cada ponto de acordo com as seguintes 4 competências:
   
-Argumentação e Informatividade (AI) [0 a 8 pontos]: Avalie a originalidade, a relevância, a correção e a autoria dos meus argumentos. O texto traz repertório suficiente e bem applied ao tema?
+Argumentação e Informatividade (AI) [0 a 8 pontos]: Avalie a originalidade, a relevância, a correção e a autoria dos meus argumentos. O texto traz repertório suficiente e bem aplicado ao tema?
 Coerência e Coesão (CC) [0 a 8 pontos]: Veja se a estrutura dos parágrafos está bem organizada, se há progressão clara das ideias sem contradições e se usei os conectivos de forma correta e variada.
 Morfossintaxe (M) [0 a 2 pontos]: Analise a estrutura das frases, a concordância verbal e nominal, a regência, os tempos verbais e a colocação pronominal.
-Pontuação, Acentuação e Ortografia (PO) [0 a 2 pontos]: Aponta qualquer desvio gramatical, erro de acentuação, ortografia ou uso incorreto da pontuação (vírgulas, pontos, etc.).
+Pontuação, Acentuação e Ortografia (PO) [0 a 2 pontos]: Aponte qualquer desvio gramatical, erro de acentuação, ortografia ou uso incorreto da pontuação (vírgulas, pontos, etc.).
 
 Por favor, aponte os erros diretamente no texto, explique como posso melhorar cada trecho e dê a nota final detalhada por competência. 
 As notas de cada competência podem ser fracionadas (ex.: 6,5 / 1,25). A soma total varia de 0 a 20 pontos.
@@ -543,7 +548,9 @@ Retorne EXCLUSIVAMENTE um JSON válido neste formato exato (sem texto antes ou d
   }
 }
 
-// Exposição das Funções Globais chamadas no HTML
+// ==========================================
+// MAPEAMENTO GLOBAL DAS FUNÇÕES (PARA O HTML)
+// ==========================================
 window.processarAutenticacao = processarAutenticacao;
 window.alternarModoAutenticacao = alternarModoAutenticacao;
 window.entrarComGoogle = entrarComGoogle;
@@ -563,12 +570,17 @@ window.novaRedacao = novaRedacao;
 window.carregarRedacao = carregarRedacao;
 window.deletarRedacao = deletarRedacao;
 
-// Inicialização de Elementos e Eventos
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   editor = document.getElementById('editor');
   tema = document.getElementById('tema');
   titulo = document.getElementById('titulo');
   rascunho = document.getElementById('rascunho');
+
+  aplicarTemaSalvo();
+  inicializarFirebase();
 
   const lineNumbersContainer = document.getElementById('line-numbers');
   if (lineNumbersContainer && lineNumbersContainer.children.length === 0) {
@@ -580,12 +592,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (editor) {
-    editor.addEventListener('keydown', handleTabIndent);
-  }
-  if (rascunho) {
-    rascunho.addEventListener('keydown', handleTabIndent);
-  }
+  if (editor) editor.addEventListener('keydown', handleTabIndent);
+  if (rascunho) rascunho.addEventListener('keydown', handleTabIndent);
 
   const passwordInput = document.getElementById('auth-password');
   if (passwordInput) {
@@ -593,6 +601,4 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') processarAutenticacao();
     });
   }
-
-  aplicarTemaSalvo();
 });
