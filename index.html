@@ -6,7 +6,22 @@
   <title>Redação</title>
   <link rel="icon" type="image/x-icon" href="image/favicon.png">
   <link rel="stylesheet" href="./style.css">
-  
+
+<!-- Viewport para Mobile -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Cor da barra de navegação no Android -->
+<meta name="theme-color" content="#000000">
+
+<!-- Link do Manifest Geral -->
+<link rel="manifest" href="manifest.json">
+
+<!-- CONFIGURAÇÕES ESPECÍFICAS PARA IPHONE (iOS) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AvaliadorIA">
+<link rel="apple-touch-icon" href="image/icon-192.png">
+
   <!-- Bibliotecas externas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -17,8 +32,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <!-- Seus Scripts (Nesta Ordem Exata) -->
-  <script src="config.js"></script>
-  <script src="script.js"></script>
+  <script src="config.js"> defer</script>
+  <script src="script.js"> defer</script>
 </head>
 <body>
 
@@ -194,5 +209,16 @@
     </div>
   </div>
 
+   <!-- Android + IOS  -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => console.log('Service Worker registrado com sucesso!', reg))
+        .catch((err) => console.error('Erro ao registrar Service Worker:', err));
+    });
+  }
+</script>
+  
 </body>
 </html>
