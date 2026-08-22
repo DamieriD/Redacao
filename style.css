@@ -665,25 +665,37 @@ body.dark-mode .save-status-header {
 
 /* REGRAS EXCLUSIVAS PARA CELULAR (Telas de até 768px) */
 @media (max-width: 768px) {
-  
-  /* Evita vazamento para os lados */
-  body {
-    padding: 10px;
-    overflow-x: hidden;
-  }
-
-  /* Faz o cartão da IA ocupar a largura do celular */
-  #ai-evaluation-card, 
-  .ai-card {
+  /* Trava o corpo do site na largura da tela */
+  html, body {
     width: 100% !important;
-    padding: 12px;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 
-  /* Deixa os botões fáceis de clicar */
-  button, 
-  .ai-btn-main {
-    width: 100%;
-    min-height: 48px;
-    font-size: 16px;
+  /* Ajusta a folha de redação e contêineres para não estourarem */
+  .container, 
+  .paper, 
+  .redacao-container,
+  #folha-redacao,
+  #bloco-rascunho {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Organiza os botões do topo para entrarem em linha/quebra automática */
+  .toolbar, 
+  .top-bar, 
+  .menu-botoes {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    width: 100% !important;
+  }
+
+  .toolbar button, 
+  .toolbar select {
+    flex: 1 1 auto !important;
+    font-size: 14px !important;
   }
 }
