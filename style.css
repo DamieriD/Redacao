@@ -663,39 +663,49 @@ body.dark-mode .save-status-header {
 
 
 
-/* REGRAS EXCLUSIVAS PARA CELULAR (Telas de até 768px) */
 @media (max-width: 768px) {
-  /* Trava o corpo do site na largura da tela */
+  /* 1. Trava o site na tela do celular */
   html, body {
     width: 100% !important;
     max-width: 100vw !important;
     overflow-x: hidden !important;
   }
 
-  /* Ajusta a folha de redação e contêineres para não estourarem */
-  .container, 
-  .paper, 
-  .redacao-container,
-  #folha-redacao,
-  #bloco-rascunho {
+  /* 2. Empilha a sidebar e o conteúdo em vez de colocar lado a lado */
+  #app-content {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .sidebar {
     width: 100% !important;
     max-width: 100% !important;
-    box-sizing: border-box !important;
+    margin-bottom: 15px;
   }
 
-  /* Organiza os botões do topo para entrarem em linha/quebra automática */
-  .toolbar, 
-  .top-bar, 
-  .menu-botoes {
+  .main-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* 3. Ajusta a barra de ferramentas (toolbar) para quebrar os botões */
+  .toolbar-container {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 5px !important;
+    gap: 8px !important;
     width: 100% !important;
+    justify-content: center !important;
   }
 
-  .toolbar button, 
-  .toolbar select {
-    flex: 1 1 auto !important;
-    font-size: 14px !important;
+  .tool-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  .tool-btn {
+    padding: 6px 10px !important;
+    font-size: 13px !important;
   }
 }
