@@ -658,3 +658,32 @@ body.dark-mode .save-status-header {
   display: block;
   margin-bottom: 15px;
 }
+
+
+
+
+
+/* REGRAS EXCLUSIVAS PARA CELULAR (Telas de até 768px) */
+@media (max-width: 768px) {
+  
+  /* Evita vazamento para os lados */
+  body {
+    padding: 10px;
+    overflow-x: hidden;
+  }
+
+  /* Faz o cartão da IA ocupar a largura do celular */
+  #ai-evaluation-card, 
+  .ai-card {
+    width: 100% !important;
+    padding: 12px;
+  }
+
+  /* Deixa os botões fáceis de clicar */
+  button, 
+  .ai-btn-main {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+  }
+}
